@@ -9,7 +9,6 @@ import { getPresetScenarios } from './data/presetScenarios';
 import { spatialAudio, speakSmart } from './utils/audio';
 import { TacticalViewfinder } from './components/TacticalViewfinder';
 import { SpatialRadar } from './components/SpatialRadar';
-import { RawJsonInspector } from './components/RawJsonInspector';
 import { AssistiveHud } from './components/AssistiveHud';
 import { TelemetryBar } from './components/TelemetryBar';
 import { ScenarioSelector } from './components/ScenarioSelector';
@@ -719,15 +718,6 @@ export default function App() {
                   urgency={response?.urgency || 'normal'}
                   onPingSector={handlePingSector}
                 />
-
-                {/* Pitch Judge Raw JSON Inspector */}
-                <div className="flex-1 min-h-[250px]">
-                  <RawJsonInspector
-                    response={response}
-                    rawJsonString={rawJsonText}
-                    latencyMs={latencyMs || undefined}
-                  />
-                </div>
               </div>
             </div>
           </div>
