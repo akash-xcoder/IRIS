@@ -609,21 +609,6 @@ export default function App() {
         {/* Pitch Dashboard View: Full Tactical Monitoring Layout */}
         {viewMode === 'pitch-dashboard' ? (
           <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Real-time Telemetry Metrics Bar */}
-            <TelemetryBar
-              latencyMs={latencyMs}
-              urgency={response?.urgency || 'normal'}
-              detectionCount={response?.detections.length || 0}
-              isAutoScanning={isAutoScanning}
-              autoScanInterval={autoScanInterval}
-              onToggleAutoScan={() => setIsAutoScanning(!isAutoScanning)}
-              onChangeInterval={setAutoScanInterval}
-              isAnalyzing={isAnalyzing}
-              totalFramesAnalyzed={totalFramesAnalyzed}
-              engineMode={engineMode}
-              yoloFps={yoloFps}
-            />
-
             {/* Split Screen Grid: Viewfinder on Left, Tactical Intelligence on Right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
               {/* Left Column: 1000-Point Normalized Viewfinder (7 cols on lg) */}
@@ -646,6 +631,21 @@ export default function App() {
                   yoloFps={yoloFps}
                   yoloInferenceMs={yoloInferenceMs}
                   isYoloReady={isYoloReady}
+                />
+
+                {/* Real-time Telemetry Metrics Bar */}
+                <TelemetryBar
+                  latencyMs={latencyMs}
+                  urgency={response?.urgency || 'normal'}
+                  detectionCount={response?.detections.length || 0}
+                  isAutoScanning={isAutoScanning}
+                  autoScanInterval={autoScanInterval}
+                  onToggleAutoScan={() => setIsAutoScanning(!isAutoScanning)}
+                  onChangeInterval={setAutoScanInterval}
+                  isAnalyzing={isAnalyzing}
+                  totalFramesAnalyzed={totalFramesAnalyzed}
+                  engineMode={engineMode}
+                  yoloFps={yoloFps}
                 />
 
                 {/* Feed Source Mode Tabs */}
