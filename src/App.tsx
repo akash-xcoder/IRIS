@@ -521,7 +521,7 @@ export default function App() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
-                  AegisVision <span className="text-cyan-400 font-mono text-xs">AI HUD</span>
+                  IRIS <span className="text-cyan-400 font-mono text-xs">AI HUD</span>
                 </h1>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">

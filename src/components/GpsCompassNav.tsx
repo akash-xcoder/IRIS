@@ -147,152 +147,174 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
         </button>
       </div>
 
-      {/* Two Column Cockpit: Compass Rose & Coordinates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Left: Compass Dial */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex items-center justify-around gap-4">
-          {/* Compass Dial Graphic */}
-          <div className="relative w-28 h-28 rounded-full border-2 border-slate-700 bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">
-            {/* Cardinal Marks */}
-            <span className="absolute top-1 text-[9px] font-mono font-bold text-rose-400">N</span>
-            <span className="absolute bottom-1 text-[9px] font-mono text-slate-400">S</span>
-            <span className="absolute left-1.5 text-[9px] font-mono text-slate-400">W</span>
-            <span className="absolute right-1.5 text-[9px] font-mono text-slate-400">E</span>
-
-            {/* Target Bearing Needle */}
-            <div
-              className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
-              style={{ transform: `rotate(${angleDiff}deg)` }}
-            >
-              <div className="w-1.5 h-12 bg-gradient-to-t from-transparent via-cyan-400 to-cyan-300 rounded-full shadow-[0_0_8px_#22d3ee]" />
-            </div>
-
-            {/* Center Core */}
-            <div className="w-5 h-5 rounded-full bg-slate-950 border border-slate-700 flex items-center justify-center z-10">
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            </div>
+      {/* Merged Unified Cockpit: Compass Rose, Telemetry & Waypoint Navigation */}
+      <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 shadow-xl">
+        {/* Unified Cockpit Header */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">
+              NAVIGATION COCKPIT & ACTIVE WAYPOINT
+            </span>
           </div>
-
-          {/* Compass Telemetry Readouts */}
-          <div className="flex flex-col gap-1.5 text-xs font-mono">
-            <div className="flex justify-between gap-3 text-slate-400 border-b border-slate-800/80 pb-1">
-              <span>HEADING:</span>
-              <strong className="text-white">{userHeading}°</strong>
-            </div>
-            <div className="flex justify-between gap-3 text-slate-400 border-b border-slate-800/80 pb-1">
-              <span>TARGET BEARING:</span>
-              <strong className="text-cyan-300">{targetBearing}°</strong>
-            </div>
-            <div className="flex justify-between gap-3 text-slate-400 border-b border-slate-800/80 pb-1">
-              <span>STEERING DEFLECTION:</span>
-              <strong className={Math.abs(angleDiff) < 20 ? 'text-emerald-400' : 'text-amber-400'}>
-                {angleDiff > 0 ? `+${angleDiff}° R` : `${angleDiff}° L`}
-              </strong>
-            </div>
-            <div className="flex justify-between gap-3 text-slate-400">
-              <span>DISTANCE REMAINING:</span>
-              <strong className="text-emerald-300">{guidance?.distanceMeters || '--'} m</strong>
-            </div>
-          </div>
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline font-medium"
+          >
+            {showConfig ? 'Hide Settings' : 'Edit Coordinates'}
+          </button>
         </div>
 
-        {/* Right: GPS Coordinates & Waypoint Selector */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between gap-2.5">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-slate-400 uppercase">ACTIVE POSITION & WAYPOINT</span>
-            <button
-              onClick={() => setShowConfig(!showConfig)}
-              className="text-[11px] text-cyan-400 hover:text-cyan-300 underline font-medium"
-            >
-              {showConfig ? 'Hide Settings' : 'Edit Coordinates'}
-            </button>
-          </div>
-
-          {showConfig ? (
-            <form onSubmit={handleApplyCustom} className="flex flex-col gap-2 text-xs font-mono">
+        {/* Unified Cockpit Body */}
+        {showConfig ? (
+          <form onSubmit={handleApplyCustom} className="flex flex-col gap-2.5 text-xs font-mono p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+            <span className="text-[11px] text-slate-400 font-bold uppercase">Configure Target Waypoint</span>
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Waypoint Name"
+              className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white outline-none focus:border-cyan-400"
+            />
+            <div className="grid grid-cols-2 gap-2">
               <input
-                type="text"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Waypoint Name"
-                className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-white outline-none focus:border-cyan-400"
+                type="number"
+                step="any"
+                value={customLat}
+                onChange={(e) => setCustomLat(e.target.value)}
+                placeholder="Target Latitude"
+                className="bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-[11px] outline-none focus:border-cyan-400"
               />
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  step="any"
-                  value={customLat}
-                  onChange={(e) => setCustomLat(e.target.value)}
-                  placeholder="Target Latitude"
-                  className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-[11px] outline-none focus:border-cyan-400"
-                />
-                <input
-                  type="number"
-                  step="any"
-                  value={customLon}
-                  onChange={(e) => setCustomLon(e.target.value)}
-                  placeholder="Target Longitude"
-                  className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-[11px] outline-none focus:border-cyan-400"
-                />
-              </div>
+              <input
+                type="number"
+                step="any"
+                value={customLon}
+                onChange={(e) => setCustomLon(e.target.value)}
+                placeholder="Target Longitude"
+                className="bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-[11px] outline-none focus:border-cyan-400"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowConfig(false)}
+                className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
-                className="py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs"
+                className="px-4 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs"
               >
                 Set Waypoint
               </button>
-            </form>
-          ) : (
-            <div className="flex flex-col gap-1.5 text-[11px] font-mono">
-              <div className="flex justify-between text-slate-400">
-                <span>CURRENT GPS:</span>
-                <span className="text-slate-200">
-                  {gpsLocation ? `${gpsLocation.latitude.toFixed(5)}, ${gpsLocation.longitude.toFixed(5)}` : 'Waiting for GPS...'}
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>TARGET GPS:</span>
-                <span className="text-cyan-300">
-                  {target.latitude.toFixed(5)}, {target.longitude.toFixed(5)}
-                </span>
+            </div>
+          </form>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {/* Top row: Dial + Orientation Telemetry + Position Readouts */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
+              {/* Compass Dial Graphic (4 cols on sm) */}
+              <div className="sm:col-span-4 flex flex-col items-center justify-center p-2 bg-slate-900/50 rounded-xl border border-slate-800/80">
+                <div className="relative w-26 h-26 rounded-full border-2 border-slate-700 bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">
+                  {/* Cardinal Marks */}
+                  <span className="absolute top-1 text-[9px] font-mono font-bold text-rose-400">N</span>
+                  <span className="absolute bottom-1 text-[9px] font-mono text-slate-400">S</span>
+                  <span className="absolute left-1.5 text-[9px] font-mono text-slate-400">W</span>
+                  <span className="absolute right-1.5 text-[9px] font-mono text-slate-400">E</span>
+
+                  {/* Target Bearing Needle */}
+                  <div
+                    className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+                    style={{ transform: `rotate(${angleDiff}deg)` }}
+                  >
+                    <div className="w-1.5 h-11 bg-gradient-to-t from-transparent via-cyan-400 to-cyan-300 rounded-full shadow-[0_0_8px_#22d3ee]" />
+                  </div>
+
+                  {/* Center Core */}
+                  <div className="w-5 h-5 rounded-full bg-slate-950 border border-slate-700 flex items-center justify-center z-10">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  </div>
+                </div>
+
+                <div className="mt-2 text-center">
+                  <span className="text-[10px] font-mono text-slate-400 block">STEERING DEFLECTION</span>
+                  <strong className={`text-xs font-mono font-bold ${Math.abs(angleDiff) < 20 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {angleDiff > 0 ? `+${angleDiff}° RIGHT` : `${angleDiff}° LEFT`}
+                  </strong>
+                </div>
               </div>
 
-              {/* Quick Preset Buttons */}
-              <div className="mt-1 pt-1.5 border-t border-slate-800/80 flex flex-wrap gap-1.5">
-                <span className="text-[10px] text-slate-500 self-center">QUICK:</span>
-                {presets.map((p) => (
-                  <button
-                    key={p.name}
-                    onClick={() => {
-                      onSetTarget(p);
-                      setCustomName(p.name);
-                      setCustomLat(p.latitude.toString());
-                      setCustomLon(p.longitude.toString());
-                    }}
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all border ${
-                      target.name === p.name
-                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
-                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {p.name.split(' ')[0]}
-                  </button>
-                ))}
+              {/* Live Flight Telemetry Metrics (4 cols on sm) */}
+              <div className="sm:col-span-4 flex flex-col gap-2 text-xs font-mono bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 self-stretch justify-center">
+                <div className="flex justify-between items-center text-slate-400 border-b border-slate-800/80 pb-1.5">
+                  <span className="text-[10px] text-slate-400 uppercase">HEADING</span>
+                  <strong className="text-white text-sm">{userHeading}°</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-400 border-b border-slate-800/80 pb-1.5">
+                  <span className="text-[10px] text-slate-400 uppercase">TARGET BEARING</span>
+                  <strong className="text-cyan-300 text-sm">{targetBearing}°</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-400">
+                  <span className="text-[10px] text-slate-400 uppercase">DISTANCE</span>
+                  <strong className="text-emerald-300 text-sm">{guidance?.distanceMeters || '--'} m</strong>
+                </div>
+              </div>
 
-                {/* Relative Waypoint: 50m North from current user location */}
-                {gpsLocation && (
-                  <button
-                    onClick={() => onSetRelativeTarget(50, 0)}
-                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80"
-                    title="Set target 50 meters directly ahead of current position"
-                  >
-                    +50m Ahead
-                  </button>
-                )}
+              {/* Coordinates Info & Active Waypoint (4 cols on sm) */}
+              <div className="sm:col-span-4 flex flex-col gap-2 text-[11px] font-mono bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 self-stretch justify-between">
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">TARGET WAYPOINT</span>
+                  <strong className="text-cyan-200 text-xs truncate block font-sans font-bold mt-0.5">{target.name}</strong>
+                  <span className="text-cyan-400/90 text-[10px] font-mono block mt-0.5">
+                    {target.latitude.toFixed(5)}, {target.longitude.toFixed(5)}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-slate-800/80">
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">CURRENT GPS FIX</span>
+                  <span className="text-slate-300 text-[10px] font-mono block mt-0.5">
+                    {gpsLocation ? `${gpsLocation.latitude.toFixed(5)}, ${gpsLocation.longitude.toFixed(5)}` : 'Waiting for GPS fix...'}
+                  </span>
+                </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Quick Preset Buttons Bar */}
+            <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mr-1">
+                QUICK WAYPOINTS:
+              </span>
+              {presets.map((p) => (
+                <button
+                  key={p.name}
+                  onClick={() => {
+                    onSetTarget(p);
+                    setCustomName(p.name);
+                    setCustomLat(p.latitude.toString());
+                    setCustomLon(p.longitude.toString());
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition-all border ${
+                    target.name === p.name
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  {p.name.split(' ')[0]}
+                </button>
+              ))}
+
+              {gpsLocation && (
+                <button
+                  onClick={() => onSetRelativeTarget(50, 0)}
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80 font-bold ml-auto"
+                  title="Set target 50 meters directly ahead of current position"
+                >
+                  +50m Ahead
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
