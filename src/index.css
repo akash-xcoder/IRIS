@@ -8,8 +8,9 @@
 
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color-scheme: dark;
-    background-color: #030712;
+    color-scheme: light;
+    background-color: #ffffff;
+    color: #09090b;
     overflow-x: hidden;
   }
 }
@@ -60,12 +61,12 @@
 /* Tactical Grid overlay pattern */
 .tactical-grid-bg {
   background-image: 
-    linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.025) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
 .subtle-dots-bg {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
   background-size: 16px 16px;
 }

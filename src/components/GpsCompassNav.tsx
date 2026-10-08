@@ -67,20 +67,20 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
   return (
     <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 sm:p-5 flex flex-col gap-4 shadow-xl">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
             <Compass className="w-4 h-4 animate-spin-slow" />
           </div>
           <div>
-            <h3 className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 flex items-center gap-2">
-              GPS WAYPOINT & COMPASS GUIDANCE
-              <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-700 text-cyan-300 text-[10px] font-normal">
-                100% Client-Side Pure Math
+            <h3 className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 flex items-center gap-1.5 flex-wrap">
+              GPS & COMPASS WAYPOINT
+              <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-700 text-cyan-300 text-[9px] sm:text-[10px] font-normal">
+                Pure Math
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400">
-              Zero external API calls • Computes real-time Haversine distance & Great-Circle bearing
+            <p className="text-[10px] sm:text-[11px] text-slate-400">
+              Zero external APIs • Computes Haversine distance & bearing
             </p>
           </div>
         </div>
@@ -88,13 +88,13 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
         {!isGpsActive ? (
           <button
             onClick={onStartGps}
-            className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 shadow-md shadow-cyan-900/30"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-900/30 active:scale-95"
           >
             <LocateFixed className="w-3.5 h-3.5" />
             <span>Enable GPS</span>
           </button>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-600 text-emerald-300 text-[11px] font-mono font-medium">
+          <div className="self-start sm:self-center flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-600 text-emerald-300 text-[10px] sm:text-[11px] font-mono font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span>GPS LOCKED [±{gpsLocation?.accuracy || 5}m]</span>
           </div>
@@ -104,7 +104,7 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
       {/* Main Guidance Banner (#guidance-output) */}
       <div
         id="guidance-output"
-        className={`p-4 rounded-xl border-2 flex items-center justify-between gap-4 transition-all shadow-lg ${
+        className={`p-3.5 sm:p-4 rounded-xl border-2 flex items-center justify-between gap-3 sm:gap-4 transition-all shadow-lg ${
           guidance?.isArrived
             ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200'
             : Math.abs(angleDiff) < 20
@@ -112,27 +112,27 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
             : 'bg-amber-950/80 border-amber-500 text-amber-100'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-white/10 shrink-0">
             {guidance?.isArrived ? (
-              <CheckCircle className="w-6 h-6 text-emerald-400" />
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             ) : (
               <div
                 className="transition-transform duration-300"
                 style={{ transform: `rotate(${angleDiff}deg)` }}
               >
-                <ArrowUp className="w-6 h-6 text-cyan-300" />
+                <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-300" />
               </div>
             )}
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+          <div className="flex flex-col min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-slate-400">
               VOICE NAVIGATION DIRECTIVE
             </span>
-            <span className="text-sm sm:text-base font-bold font-mono tracking-tight leading-tight">
+            <span className="text-xs sm:text-base font-bold font-mono tracking-tight leading-snug break-words">
               {guidance?.turnInstruction || 'Calculating GPS waypoint coordinates...'}
             </span>
-            <span className="text-[11px] text-slate-300/80 font-mono mt-0.5">
+            <span className="text-[10px] sm:text-[11px] text-slate-300/80 font-mono mt-0.5 truncate">
               Target: <strong className="text-white">{target.name}</strong> ({guidance?.distanceMeters || '--'}m)
             </span>
           </div>
@@ -140,10 +140,10 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
 
         <button
           onClick={onSpeakGuidance}
-          className="p-3 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 text-white shrink-0 active:scale-95 transition-all"
+          className="p-2.5 sm:p-3 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 text-white shrink-0 active:scale-95 transition-all"
           title="Repeat spoken guidance"
         >
-          <Volume2 className="w-5 h-5 text-cyan-300" />
+          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" />
         </button>
       </div>
 
@@ -280,38 +280,40 @@ export const GpsCompassNav: React.FC<GpsCompassNavProps> = ({
             </div>
 
             {/* Quick Preset Buttons Bar */}
-            <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mr-1">
+            <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider shrink-0">
                 QUICK WAYPOINTS:
               </span>
-              {presets.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => {
-                    onSetTarget(p);
-                    setCustomName(p.name);
-                    setCustomLat(p.latitude.toString());
-                    setCustomLon(p.longitude.toString());
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition-all border ${
-                    target.name === p.name
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm'
-                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
-                  }`}
-                >
-                  {p.name.split(' ')[0]}
-                </button>
-              ))}
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {presets.map((p) => (
+                  <button
+                    key={p.name}
+                    onClick={() => {
+                      onSetTarget(p);
+                      setCustomName(p.name);
+                      setCustomLat(p.latitude.toString());
+                      setCustomLon(p.longitude.toString());
+                    }}
+                    className={`px-2.5 py-1.5 sm:py-1 rounded-lg text-[10px] font-mono transition-all border ${
+                      target.name === p.name
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    {p.name.split(' ')[0]}
+                  </button>
+                ))}
 
-              {gpsLocation && (
-                <button
-                  onClick={() => onSetRelativeTarget(50, 0)}
-                  className="px-2.5 py-1 rounded-lg text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80 font-bold ml-auto"
-                  title="Set target 50 meters directly ahead of current position"
-                >
-                  +50m Ahead
-                </button>
-              )}
+                {gpsLocation && (
+                  <button
+                    onClick={() => onSetRelativeTarget(50, 0)}
+                    className="px-2.5 py-1.5 sm:py-1 rounded-lg text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80 font-bold sm:ml-auto"
+                    title="Set target 50 meters directly ahead of current position"
+                  >
+                    +50m Ahead
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

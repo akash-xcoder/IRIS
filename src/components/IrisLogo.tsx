@@ -16,18 +16,16 @@ export const IrisLogo: React.FC<IrisLogoProps> = ({ className = 'w-7 h-7', size 
       aria-label="IRIS Assistive Logo"
     >
       <defs>
-        {/* Main Cyan to Purple/Magenta Gradient matching the uploaded logo */}
+        {/* Crisp monochrome silver/white gradient for clean aesthetic */}
         <linearGradient id="irisLinearGrad" x1="10%" y1="10%" x2="90%" y2="90%">
-          <stop offset="0%" stopColor="#00f2fe" />
-          <stop offset="35%" stopColor="#06b6d4" />
-          <stop offset="70%" stopColor="#c084fc" />
-          <stop offset="100%" stopColor="#d946ef" />
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="50%" stopColor="#f1f5f9" />
+          <stop offset="100%" stopColor="#cbd5e1" />
         </linearGradient>
 
         <linearGradient id="irisPupilGrad" x1="20%" y1="20%" x2="80%" y2="80%">
-          <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="50%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#ec4899" />
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#94a3b8" />
         </linearGradient>
 
         {/* Glow filter for tactical presence */}

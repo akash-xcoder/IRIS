@@ -22,21 +22,21 @@ export const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({
   isAnalyzing,
 }) => {
   return (
-    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 flex flex-col shadow-xl">
-      <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2.5">
+    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 sm:p-4 flex flex-col shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 border-b border-slate-800 pb-2.5">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-cyan-400" />
+          <Layers className="w-4 h-4 text-cyan-400 shrink-0" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
             TEST SCENARIOS & FEED INPUTS
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-center">
           {/* Live Camera Button */}
           <button
             onClick={onUseLiveCamera}
             disabled={isAnalyzing}
-            className={`px-2.5 py-1 rounded text-xs font-mono font-medium flex items-center gap-1.5 transition-all border ${
+            className={`px-2.5 py-1.5 sm:py-1 rounded text-xs font-mono font-medium flex items-center gap-1.5 transition-all border ${
               isCameraActive
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-md'
                 : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
@@ -47,7 +47,7 @@ export const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({
           </button>
 
           {/* Upload Custom Test Image */}
-          <label className="px-2.5 py-1 rounded text-xs font-mono font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 cursor-pointer transition-colors">
+          <label className="px-2.5 py-1.5 sm:py-1 rounded text-xs font-mono font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 cursor-pointer transition-colors">
             <Upload className="w-3.5 h-3.5" />
             <span>Upload Photo</span>
             <input

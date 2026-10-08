@@ -57,38 +57,38 @@ export const SpatialRadar: React.FC<SpatialRadarProps> = ({
   const isRightBlocked = blips.some((b) => b.pan > 0.25 && Number(b.distanceMeters) < 3);
 
   return (
-    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 flex flex-col shadow-xl">
-      <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2.5">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col shadow-xs">
+      <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
         <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
-          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">
+          <Radio className="w-4 h-4 text-black animate-pulse" />
+          <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-black">
             SPATIAL HAZARD RADAR (180° ARC)
           </h3>
         </div>
-        <span className="font-mono text-[10px] text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
+        <span className="font-mono text-[10px] text-black bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold">
           STEREO MAPPED
         </span>
       </div>
 
       {/* Radar Visualizer Screen */}
-      <div className="relative w-[280px] h-[160px] mx-auto bg-slate-950 rounded-t-full border-t-2 border-l-2 border-r-2 border-cyan-500/40 overflow-hidden flex items-end justify-center shadow-inner">
+      <div className="relative w-[280px] h-[160px] mx-auto bg-white rounded-t-full border-t-2 border-l-2 border-r-2 border-slate-300 overflow-hidden flex items-end justify-center shadow-inner">
         {/* Radar Rings */}
-        <div className="absolute w-[240px] h-[120px] rounded-t-full border-t border-cyan-500/20 border-l border-r pointer-events-none" />
-        <div className="absolute w-[160px] h-[80px] rounded-t-full border-t border-cyan-500/30 border-l border-r pointer-events-none" />
-        <div className="absolute w-[80px] h-[40px] rounded-t-full border-t border-cyan-500/40 border-l border-r pointer-events-none" />
+        <div className="absolute w-[240px] h-[120px] rounded-t-full border-t border-slate-300/70 border-l border-r pointer-events-none" />
+        <div className="absolute w-[160px] h-[80px] rounded-t-full border-t border-slate-300/70 border-l border-r pointer-events-none" />
+        <div className="absolute w-[80px] h-[40px] rounded-t-full border-t border-slate-300/70 border-l border-r pointer-events-none" />
 
         {/* Radar Sector Radial Lines */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-cyan-500/20 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-cyan-500/15 -rotate-30 origin-bottom pointer-events-none" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-cyan-500/15 rotate-30 origin-bottom pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-slate-300/60 pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-slate-300/40 -rotate-30 origin-bottom pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-slate-300/40 rotate-30 origin-bottom pointer-events-none" />
 
         {/* Sweep beam */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[140px] h-[140px] bg-gradient-to-tr from-cyan-500/20 to-transparent rounded-full origin-bottom animate-radar-sweep pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[140px] h-[140px] bg-gradient-to-tr from-black/10 to-transparent rounded-full origin-bottom animate-radar-sweep pointer-events-none" />
 
         {/* Range markers */}
-        <span className="absolute bottom-11 right-6 font-mono text-[8px] text-cyan-400/50">1.5m</span>
-        <span className="absolute bottom-22 right-3 font-mono text-[8px] text-cyan-400/50">3.0m</span>
-        <span className="absolute top-2 right-12 font-mono text-[8px] text-cyan-400/50">5.0m</span>
+        <span className="absolute bottom-11 right-6 font-mono text-[8px] text-slate-500 font-semibold">1.5m</span>
+        <span className="absolute bottom-22 right-3 font-mono text-[8px] text-slate-500 font-semibold">3.0m</span>
+        <span className="absolute top-2 right-12 font-mono text-[8px] text-slate-500 font-semibold">5.0m</span>
 
         {/* Left / Center / Right Label Indicators */}
         <span className="absolute bottom-2 left-4 font-mono text-[9px] text-slate-500 font-bold">LEFT</span>
@@ -105,30 +105,30 @@ export const SpatialRadar: React.FC<SpatialRadarProps> = ({
           >
             <div
               className={`w-3.5 h-3.5 rounded-full ${
-                blip.isDanger ? 'bg-rose-500 animate-ping' : 'bg-amber-400 animate-pulse'
+                blip.isDanger ? 'bg-black animate-ping' : 'bg-slate-700 animate-pulse'
               } absolute inset-0 opacity-75`}
             />
             <div
               className={`w-3.5 h-3.5 rounded-full ${
-                blip.isDanger ? 'bg-rose-600 border border-white' : 'bg-amber-500 border border-amber-200'
-              } relative flex items-center justify-center shadow-lg`}
+                blip.isDanger ? 'bg-black border border-white' : 'bg-slate-800 border border-white'
+              } relative flex items-center justify-center shadow-xs`}
             >
               <div className="w-1.5 h-1.5 bg-white rounded-full" />
             </div>
 
             {/* Hover Tooltip */}
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-white text-[9px] font-mono px-2 py-1 rounded border border-slate-700 whitespace-nowrap pointer-events-none z-30">
-              <span className="font-bold text-cyan-300">{blip.label}</span> ~{blip.distanceMeters}m
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[9px] font-mono px-2 py-1 rounded shadow-md border border-neutral-700 whitespace-nowrap pointer-events-none z-30">
+              <span className="font-bold text-white">{blip.label}</span> ~{blip.distanceMeters}m
             </div>
           </div>
         ))}
 
         {/* User position anchor (Walker) */}
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
-          <div className="w-4 h-4 rounded-full bg-cyan-400 border-2 border-white shadow-[0_0_10px_#22d3ee] flex items-center justify-center">
-            <Navigation className="w-2.5 h-2.5 text-slate-950 fill-current -rotate-45" />
+          <div className="w-4 h-4 rounded-full bg-black border-2 border-white shadow-xs flex items-center justify-center">
+            <Navigation className="w-2.5 h-2.5 text-white fill-current -rotate-45" />
           </div>
-          <span className="font-mono text-[7px] text-cyan-300 tracking-tighter uppercase font-semibold">
+          <span className="font-mono text-[7px] text-slate-700 tracking-tighter uppercase font-bold">
             WALKER
           </span>
         </div>
@@ -139,34 +139,34 @@ export const SpatialRadar: React.FC<SpatialRadarProps> = ({
         <div
           className={`py-1.5 px-2 rounded border ${
             isLeftBlocked
-              ? 'bg-rose-950/60 border-rose-500/80 text-rose-300'
-              : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
+              ? 'bg-black text-white border-black font-bold'
+              : 'bg-white text-black border-slate-200'
           }`}
         >
-          <div className="text-[9px] uppercase text-slate-400">Left Path</div>
-          <div className="font-bold">{isLeftBlocked ? 'BLOCKED' : 'CLEAR'}</div>
+          <div className={`text-[9px] uppercase font-semibold ${isLeftBlocked ? 'text-slate-300' : 'text-slate-500'}`}>Left Path</div>
+          <div>{isLeftBlocked ? 'BLOCKED' : 'CLEAR'}</div>
         </div>
 
         <div
           className={`py-1.5 px-2 rounded border ${
             isCenterBlocked
-              ? 'bg-rose-950/60 border-rose-500/80 text-rose-300'
-              : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
+              ? 'bg-black text-white border-black font-bold'
+              : 'bg-white text-black border-slate-200'
           }`}
         >
-          <div className="text-[9px] uppercase text-slate-400">Center Path</div>
-          <div className="font-bold">{isCenterBlocked ? 'BLOCKED' : 'CLEAR'}</div>
+          <div className={`text-[9px] uppercase font-semibold ${isCenterBlocked ? 'text-slate-300' : 'text-slate-500'}`}>Center Path</div>
+          <div>{isCenterBlocked ? 'BLOCKED' : 'CLEAR'}</div>
         </div>
 
         <div
           className={`py-1.5 px-2 rounded border ${
             isRightBlocked
-              ? 'bg-rose-950/60 border-rose-500/80 text-rose-300'
-              : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
+              ? 'bg-black text-white border-black font-bold'
+              : 'bg-white text-black border-slate-200'
           }`}
         >
-          <div className="text-[9px] uppercase text-slate-400">Right Path</div>
-          <div className="font-bold">{isRightBlocked ? 'BLOCKED' : 'CLEAR'}</div>
+          <div className={`text-[9px] uppercase font-semibold ${isRightBlocked ? 'text-slate-300' : 'text-slate-500'}`}>Right Path</div>
+          <div>{isRightBlocked ? 'BLOCKED' : 'CLEAR'}</div>
         </div>
       </div>
     </div>

@@ -167,28 +167,29 @@ export const VideoRecordingPanel: React.FC<VideoRecordingPanelProps> = ({
   return (
     <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 sm:p-5 flex flex-col shadow-xl gap-4">
       {/* Panel Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
             <Film className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 flex items-center gap-2">
-              LIVE CAMERA VIDEO CAPTURING & RECORDING PANEL
+            <h3 className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 flex items-center gap-2 flex-wrap">
+              <span className="hidden sm:inline">LIVE CAMERA VIDEO CAPTURING & RECORDING</span>
+              <span className="sm:hidden">LIVE VIDEO RECORDING</span>
               {isRecording && (
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-950 border border-rose-500 text-rose-300 text-[10px] animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-rose-500" /> REC {formatTime(recordingDuration)}
                 </span>
               )}
             </h3>
-            <p className="text-[11px] text-slate-400">
-              Record live walk sessions, review footage, and analyze spatial hazards frame-by-frame
+            <p className="text-[10px] sm:text-[11px] text-slate-400">
+              Record live walk sessions, review footage, and analyze spatial hazards
             </p>
           </div>
         </div>
 
         {/* Camera Power Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-center">
           {isCameraActive ? (
             <button
               onClick={onStopCamera}
@@ -199,7 +200,7 @@ export const VideoRecordingPanel: React.FC<VideoRecordingPanelProps> = ({
           ) : (
             <button
               onClick={onStartCamera}
-              className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 border border-cyan-400 text-white text-xs font-mono font-bold transition-all shadow-md shadow-cyan-900/30 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 border border-cyan-400 text-white text-xs font-mono font-bold transition-all shadow-md shadow-cyan-900/30 flex items-center gap-1.5 active:scale-95"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>Enable Camera</span>

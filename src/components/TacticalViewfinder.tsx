@@ -66,31 +66,34 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
   return (
     <div className="relative w-full rounded-2xl bg-slate-950 border border-slate-800/80 overflow-hidden flex flex-col shadow-2xl">
       {/* Tactical Top Bar */}
-      <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between z-20">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center">
-            <span className={`w-2.5 h-2.5 rounded-full ${isCameraActive ? 'bg-emerald-400' : 'bg-cyan-400'} animate-ping absolute`} />
-            <span className={`w-2.5 h-2.5 rounded-full ${isCameraActive ? 'bg-emerald-500' : 'bg-cyan-500'} relative`} />
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900/95 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 z-20">
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <span className={`w-2.5 h-2.5 rounded-full ${isCameraActive ? 'bg-emerald-400' : 'bg-cyan-400'} animate-ping absolute`} />
+              <span className={`w-2.5 h-2.5 rounded-full ${isCameraActive ? 'bg-emerald-500' : 'bg-cyan-500'} relative`} />
+            </div>
+            <span className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-slate-300 uppercase truncate">
+              {isCameraActive ? `LIVE [${facingMode.toUpperCase()}]` : 'INSPECTOR'}
+            </span>
+            <span className={`text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full border uppercase font-medium ${badgeBg}`}>
+              {urgency}
+            </span>
           </div>
-          <span className="font-mono text-xs font-semibold tracking-wider text-slate-300 uppercase">
-            {isCameraActive ? `LIVE SENSOR [${facingMode.toUpperCase()}]` : 'TACTICAL FRAME INSPECTOR'}
-          </span>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border uppercase font-medium ${badgeBg}`}>
-            {urgency} STATUS
-          </span>
 
           {isCameraActive && engineMode !== 'gemini' && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 font-bold">
-              <Zap className="w-3 h-3 text-emerald-400" />
-              YOLO-NANO: {yoloFps} FPS ({yoloInferenceMs}ms)
+            <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 font-bold">
+              <Zap className="w-2.5 h-2.5 text-emerald-400" />
+              {yoloFps} FPS
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Action Controls Bar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-0.5">
           <button
             onClick={onToggleGrid}
-            className={`px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 transition-colors border ${
+            className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded text-[11px] sm:text-xs font-mono flex items-center gap-1 transition-colors border shrink-0 ${
               showGrid
                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
                 : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-slate-200'
@@ -98,13 +101,13 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
             title="Toggle 1000-Point Normalized Grid"
           >
             <Crosshair className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">1000pt Grid</span>
+            <span>Grid</span>
           </button>
 
           {/* Mirror Preview Toggle (transform: scaleX(-1)) */}
           <button
             onClick={() => setIsMirrored((prev) => !prev)}
-            className={`px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 transition-colors border ${
+            className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded text-[11px] sm:text-xs font-mono flex items-center gap-1 transition-colors border shrink-0 ${
               isMirrored
                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
                 : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-slate-200'
@@ -112,30 +115,31 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
             title="Toggle Mirrored Video View (transform: scaleX(-1))"
           >
             <FlipHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Mirror {isMirrored ? 'ON' : 'OFF'}</span>
+            <span>{isMirrored ? 'Mirror ON' : 'Mirror'}</span>
           </button>
 
           {isCameraActive && (
             <button
               onClick={onSwitchCamera}
-              className="p-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+              className="px-2 py-1.5 sm:p-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-1 text-[11px] shrink-0"
               title="Switch Front/Rear Camera"
             >
               <RefreshCw className="w-3.5 h-3.5" />
+              <span className="sm:hidden">Flip</span>
             </button>
           )}
 
           {onToggleCamera && (
             <button
               onClick={onToggleCamera}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-medium flex items-center gap-1.5 transition-all border ${
+              className={`px-2.5 py-1.5 sm:py-1 rounded text-[11px] sm:text-xs font-mono font-medium flex items-center gap-1 transition-all border shrink-0 ${
                 isCameraActive
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
                   : 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400 shadow-sm'
               }`}
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>{isCameraActive ? 'Camera ON' : 'Turn On Cam'}</span>
+              <span>{isCameraActive ? 'Cam ON' : 'Start Cam'}</span>
             </button>
           )}
         </div>
@@ -334,12 +338,12 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
       </div>
 
       {/* Quick Status Bar */}
-      <div className="px-4 py-2.5 bg-slate-900/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400">
-        <div className="flex items-center gap-3">
-          <span>
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900/90 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs font-mono text-slate-400">
+        <div className="flex items-center justify-between sm:justify-start gap-2.5 flex-wrap">
+          <span className="text-[11px] sm:text-xs">
             TARGETS: <strong className="text-slate-100">{detections.length}</strong>
           </span>
-          <span className="hidden sm:inline">
+          <span className="hidden md:inline">
             GRID: <strong className="text-cyan-400">1000 x 1000</strong>
           </span>
 
@@ -348,36 +352,36 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
             <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-[10px]">
               <button
                 onClick={() => onSelectEngineMode('hybrid')}
-                className={`px-2 py-0.5 rounded transition-all ${
+                className={`px-2 py-1 rounded transition-all whitespace-nowrap ${
                   engineMode === 'hybrid'
                     ? 'bg-cyan-600 text-white font-bold shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
                 title="Local YOLO 30-FPS Tracking + Gemini Spatial Reasoning"
               >
-                Hybrid (YOLO+Gemini)
+                Hybrid
               </button>
               <button
                 onClick={() => onSelectEngineMode('local-yolo')}
-                className={`px-2 py-0.5 rounded transition-all ${
+                className={`px-2 py-1 rounded transition-all whitespace-nowrap ${
                   engineMode === 'local-yolo'
                     ? 'bg-emerald-600 text-white font-bold shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
                 title="100% Local Browser YOLO 30-FPS Detection"
               >
-                Local YOLO (30 FPS)
+                Local YOLO
               </button>
               <button
                 onClick={() => onSelectEngineMode('gemini')}
-                className={`px-2 py-0.5 rounded transition-all ${
+                className={`px-2 py-1 rounded transition-all whitespace-nowrap ${
                   engineMode === 'gemini'
                     ? 'bg-purple-600 text-white font-bold shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
                 title="Cloud Gemini 3.8 Flash Spatial Reasoning"
               >
-                Gemini Cloud
+                Gemini
               </button>
             </div>
           )}
@@ -386,7 +390,7 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
         <button
           onClick={onCaptureFrame}
           disabled={isAnalyzing}
-          className="px-3 py-1 rounded bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-900/30"
+          className="w-full sm:w-auto px-3.5 py-2 sm:py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-900/30 text-xs active:scale-95"
         >
           <Camera className="w-3.5 h-3.5" />
           <span>Scan Frame</span>

@@ -511,60 +511,60 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 tactical-grid-bg">
       {/* Top Navigation & Pitch Mode Switcher */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-4 py-2.5 sm:py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-950 via-slate-900 to-purple-950/80 flex items-center justify-center shadow-lg shadow-cyan-500/15 border border-cyan-400/40 p-1">
-              <IrisLogo className="w-7 h-7" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-cyan-950 via-slate-900 to-purple-950/80 flex items-center justify-center shadow-lg shadow-cyan-500/15 border border-cyan-400/40 p-1 shrink-0">
+              <IrisLogo className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
-                  IRIS <span className="text-cyan-400 font-mono text-xs">AI HUD</span>
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-bold text-sm sm:text-lg tracking-tight text-white flex items-center gap-1">
+                  IRIS <span className="text-cyan-400 font-mono text-[10px] sm:text-xs">AI HUD</span>
                 </h1>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
+              <p className="text-[10px] text-slate-400 hidden md:block">
                 Assistive Computer Vision & Spatial Reasoning Engine
               </p>
             </div>
           </div>
 
           {/* Mode Switcher & Global Audio Toggle */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* View Mode Toggle: Pitch Dashboard vs Assistive HUD */}
             <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-xl text-xs font-mono">
               <button
                 onClick={() => setViewMode('pitch-dashboard')}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg flex items-center gap-1 sm:gap-1.5 transition-all text-[11px] sm:text-xs ${
                   viewMode === 'pitch-dashboard'
                     ? 'bg-cyan-600 text-white font-bold shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tactical Pitch Dashboard</span>
-                <span className="sm:hidden">Dashboard</span>
+                <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden md:inline">Tactical Pitch Dashboard</span>
+                <span className="md:hidden">Dashboard</span>
               </button>
 
               <button
                 onClick={() => setViewMode('assistive-hud')}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg flex items-center gap-1 sm:gap-1.5 transition-all text-[11px] sm:text-xs ${
                   viewMode === 'assistive-hud'
                     ? 'bg-emerald-600 text-white font-bold shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Assistive Walker HUD</span>
-                <span className="sm:hidden">Walker HUD</span>
+                <Smartphone className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden md:inline">Assistive Walker HUD</span>
+                <span className="md:hidden">Walker</span>
               </button>
             </div>
 
             {/* Mute Button */}
             <button
               onClick={toggleMute}
-              className={`p-2 rounded-xl transition-all border ${
+              className={`p-2 rounded-xl transition-all border shrink-0 ${
                 isMuted
                   ? 'bg-rose-950/60 border-rose-500/80 text-rose-300'
                   : 'bg-slate-900 border-slate-800 text-emerald-400 hover:bg-slate-800'
@@ -578,18 +578,18 @@ export default function App() {
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3.5 sm:py-6 flex flex-col gap-4 sm:gap-6">
         {/* Error Alert if any */}
         {errorMessage && (
-          <div className="bg-amber-950/70 border border-amber-500/60 rounded-xl p-3.5 flex items-start gap-3 text-amber-200 text-xs font-mono shadow-lg">
+          <div className="bg-amber-950/70 border border-amber-500/60 rounded-xl p-3 sm:p-3.5 flex items-start gap-2.5 text-amber-200 text-xs font-mono shadow-lg">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 break-words">
               <span className="font-bold uppercase">System Notice: </span>
               {errorMessage}
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-amber-400 hover:text-white font-bold text-sm leading-none"
+              className="text-amber-400 hover:text-white font-bold text-sm leading-none p-1"
             >
               ✕
             </button>
@@ -608,7 +608,7 @@ export default function App() {
 
         {/* Pitch Dashboard View: Full Tactical Monitoring Layout */}
         {viewMode === 'pitch-dashboard' ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 sm:gap-6">
             {/* Real-time Telemetry Metrics Bar */}
             <TelemetryBar
               latencyMs={latencyMs}
@@ -625,9 +625,9 @@ export default function App() {
             />
 
             {/* Split Screen Grid: Viewfinder on Left, Tactical Intelligence on Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
               {/* Left Column: 1000-Point Normalized Viewfinder (7 cols on lg) */}
-              <div className="lg:col-span-7 flex flex-col gap-4">
+              <div className="lg:col-span-7 flex flex-col gap-3 sm:gap-4">
                 <TacticalViewfinder
                   imageSrc={activeImageSrc}
                   videoRef={videoRef}
@@ -649,29 +649,31 @@ export default function App() {
                 />
 
                 {/* Feed Source Mode Tabs */}
-                <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-800 pb-2">
                   <button
                     onClick={() => setActiveFeedTab('video-recorder')}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all border ${
+                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all border shrink-0 ${
                       activeFeedTab === 'video-recorder'
                         ? 'bg-rose-950/70 border-rose-500 text-rose-300 shadow-md shadow-rose-950/40'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
                     <Film className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Video Capturing & Recorder</span>
+                    <span className="hidden sm:inline">Video Capturing & Recorder</span>
+                    <span className="sm:hidden">Video Recorder</span>
                   </button>
 
                   <button
                     onClick={() => setActiveFeedTab('presets')}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all border ${
+                    className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all border shrink-0 ${
                       activeFeedTab === 'presets'
                         ? 'bg-cyan-950/70 border-cyan-500 text-cyan-300 shadow-md shadow-cyan-950/40'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
                     <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Preset Hazard Scenarios</span>
+                    <span className="hidden sm:inline">Preset Hazard Scenarios</span>
+                    <span className="sm:hidden">Preset Scenarios</span>
                   </button>
                 </div>
 
@@ -725,26 +727,26 @@ export default function App() {
           /* Focused Assistive Walker HUD View (Minimalist & High-Contrast for visually impaired users) */
           <div className="max-w-2xl mx-auto w-full flex flex-col gap-6">
             {/* Big Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => analyzeImageFrame()}
                 disabled={isAnalyzing}
-                className="py-6 px-8 rounded-2xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-black text-xl flex flex-col items-center justify-center gap-2 shadow-2xl transition-all border-2 border-cyan-400"
+                className="py-5 px-4 sm:py-6 sm:px-8 rounded-2xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-black text-lg sm:text-xl flex flex-col items-center justify-center gap-1.5 sm:gap-2 shadow-2xl transition-all border-2 border-cyan-400"
               >
-                <Eye className="w-8 h-8 text-cyan-200" />
+                <Eye className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-200" />
                 <span>{isAnalyzing ? 'SCANNING...' : 'SCAN PATH NOW'}</span>
-                <span className="text-xs font-mono font-normal opacity-80">
+                <span className="text-[11px] sm:text-xs font-mono font-normal opacity-80">
                   Large touch target
                 </span>
               </button>
 
               <button
                 onClick={repeatSpeech}
-                className="py-6 px-8 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-emerald-300 font-black text-xl flex flex-col items-center justify-center gap-2 shadow-2xl transition-all border-2 border-emerald-500/60"
+                className="py-5 px-4 sm:py-6 sm:px-8 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-emerald-300 font-black text-lg sm:text-xl flex flex-col items-center justify-center gap-1.5 sm:gap-2 shadow-2xl transition-all border-2 border-emerald-500/60"
               >
-                <Volume2 className="w-8 h-8 text-emerald-400" />
+                <Volume2 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" />
                 <span>REPEAT GUIDANCE</span>
-                <span className="text-xs font-mono font-normal opacity-80">
+                <span className="text-[11px] sm:text-xs font-mono font-normal opacity-80">
                   Replays spoken voice
                 </span>
               </button>
