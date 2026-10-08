@@ -16,6 +16,7 @@ import { ScenarioSelector } from './components/ScenarioSelector';
 import { VideoRecordingPanel } from './components/VideoRecordingPanel';
 import { localYolo } from './utils/localYoloDetector';
 import { GpsCompassNav } from './components/GpsCompassNav';
+import { IrisLogo } from './components/IrisLogo';
 import {
   gpsTracker,
   computeNavigationGuidance,
@@ -515,17 +516,14 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/40">
-              <Eye className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-950 via-slate-900 to-purple-950/80 flex items-center justify-center shadow-lg shadow-cyan-500/15 border border-cyan-400/40 p-1">
+              <IrisLogo className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
                   AegisVision <span className="text-cyan-400 font-mono text-xs">AI HUD</span>
                 </h1>
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800 text-[10px] font-mono text-cyan-300">
-                  GEMINI-3.8-FLASH
-                </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
                 Assistive Computer Vision & Spatial Reasoning Engine

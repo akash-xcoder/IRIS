@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Detection, UrgencyLevel } from '../types';
-import { Camera, RefreshCw, Eye, AlertTriangle, ShieldCheck, Crosshair, Zap, Cpu, Sparkles } from 'lucide-react';
+import { Camera, RefreshCw, Eye, AlertTriangle, ShieldCheck, Crosshair, Zap, Cpu, Sparkles, FlipHorizontal } from 'lucide-react';
 
 interface TacticalViewfinderProps {
   imageSrc: string | null;
@@ -44,6 +44,7 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
   isYoloReady = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMirrored, setIsMirrored] = useState<boolean>(true);
 
   // Determine border glow color based on urgency
   const urgencyColor = {
@@ -100,6 +101,20 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
             <span className="hidden sm:inline">1000pt Grid</span>
           </button>
 
+          {/* Mirror Preview Toggle (transform: scaleX(-1)) */}
+          <button
+            onClick={() => setIsMirrored((prev) => !prev)}
+            className={`px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 transition-colors border ${
+              isMirrored
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-slate-200'
+            }`}
+            title="Toggle Mirrored Video View (transform: scaleX(-1))"
+          >
+            <FlipHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Mirror {isMirrored ? 'ON' : 'OFF'}</span>
+          </button>
+
           {isCameraActive && (
             <button
               onClick={onSwitchCamera}
@@ -139,7 +154,7 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
           </div>
         )}
 
-        {/* Live Real-World Video Feed */}
+        {/* Live Real-World Video Feed (Mirrored Preview with transform: scaleX(-1)) */}
         <video
           ref={videoRef}
           autoPlay
@@ -148,13 +163,14 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
           className={`absolute inset-0 w-full h-full object-cover ${
             isCameraActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
+          style={{ transform: isMirrored ? 'scaleX(-1)' : 'none' }}
         />
 
         {/* Live Real-World Stream Watermark / HUD Badge */}
         {isCameraActive && (
           <div className="absolute top-3 left-3 z-30 flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/80 border border-emerald-500/70 text-emerald-300 text-[11px] font-mono font-bold shadow-lg backdrop-blur-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>REAL-WORLD LIVE DETECTOR</span>
+            <span>REAL-WORLD LIVE DETECTOR{isMirrored ? ' • MIRRORED' : ''}</span>
           </div>
         )}
 
@@ -224,10 +240,14 @@ export const TacticalViewfinder: React.FC<TacticalViewfinderProps> = ({
         {detections.map((detection, idx) => {
           const [ymin, xmin, ymax, xmax] = detection.box_2d;
 
+          // Align bounding boxes when mirrored preview (transform: scaleX(-1)) is active
+          const effectiveXmin = isMirrored ? Math.max(0, 1000 - xmax) : xmin;
+          const effectiveXmax = isMirrored ? Math.min(1000, 1000 - xmin) : xmax;
+
           // Convert 0..1000 coordinates to percentages
           const top = Math.max(0, Math.min(100, (ymin / 1000) * 100));
-          const left = Math.max(0, Math.min(100, (xmin / 1000) * 100));
-          const width = Math.max(2, Math.min(100, ((xmax - xmin) / 1000) * 100));
+          const left = Math.max(0, Math.min(100, (effectiveXmin / 1000) * 100));
+          const width = Math.max(2, Math.min(100, ((effectiveXmax - effectiveXmin) / 1000) * 100));
           const height = Math.max(2, Math.min(100, ((ymax - ymin) / 1000) * 100));
 
           // Heuristic hazard tier based on label and location
