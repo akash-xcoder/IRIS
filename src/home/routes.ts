@@ -51,10 +51,31 @@ export function deleteRoute(id: string) {
   }
 }
 
-/** The best saved route to `to`: one starting from the room the user is in, else the newest. */
-export function routeTo(to: Room, from: Room | null): HomeRoute | null {
-  const routes = loadRoutes().filter((r) => r.to === to)
-  return routes.find((r) => r.from === from) ?? routes[0] ?? null
+/**
+ * The saved route from `from` to `to`, or null. A route taught from another room is never used:
+ * its directions would lead the wrong way. A route taught the other way round is walked backwards
+ * (same path, legs in reverse, each heading turned around), marked `reversed`.
+ */
+export function routeTo(to: Room, from: Room): (HomeRoute & { reversed?: boolean }) | null {
+  const routes = loadRoutes()
+  const direct = routes.find((r) => r.from === from && r.to === to)
+  if (direct) return direct
+  const back = routes.find((r) => r.from === to && r.to === from)
+  return back ? reverseRoute(back) : null
+}
+
+/** The same path walked the other way: last leg first, each facing the opposite direction. */
+export function reverseRoute(route: HomeRoute): HomeRoute & { reversed: true } {
+  return {
+    ...route,
+    id: `${route.id}:reversed`,
+    from: route.to,
+    to: route.from!,
+    // Walls seen were at the ends of the forward legs; walking back they're behind, so let the
+    // turns imply them instead.
+    legs: [...route.legs].reverse().map((l) => ({ heading: (l.heading + 180) % 360, steps: l.steps })),
+    reversed: true,
+  }
 }
 
 /** A change of direction bigger than this starts a new leg. */

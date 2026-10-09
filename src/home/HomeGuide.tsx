@@ -13,8 +13,13 @@ type Mode =
   | { kind: 'ask' }
   | { kind: 'where' }
   | { kind: 'find'; room: Room }
-  | { kind: 'teach-pick' }
-  | { kind: 'teach'; from: Room | null; to: Room }
+  /** Going to `to`, but the camera can't tell which room this is: ask. */
+  | { kind: 'pick-from'; to: Room }
+  /** Nobody taught a way from `from` to `to`, in either direction. */
+  | { kind: 'no-route'; from: Room; to: Room }
+  /** Teaching: the start room first (unless the camera knows it), then the destination. */
+  | { kind: 'teach-pick'; from: Room | null }
+  | { kind: 'teach'; from: Room; to: Room }
   | { kind: 'follow'; route: HomeRoute; leg: number; stepsLeft: number; walking: boolean }
 
 /** How many recent frames vote on which room this is, and how many must agree. */
@@ -49,6 +54,7 @@ interface HomeGuideProps {
 export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, surfaceNames, stairClasses, fire }: HomeGuideProps) {
   const [mode, setMode] = useState<Mode>({ kind: 'ask' })
   const [asked, setAsked] = useState(false)
+  const [fromAsked, setFromAsked] = useState(false)
   const [room, setRoom] = useState<Room | null>(null)
   const [routes, setRoutes] = useState(loadRoutes)
   const [hasMotion, setHasMotion] = useState(false)
@@ -90,10 +96,16 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     }
   }, [])
 
-  const { heard, blocked } = useVoiceReply(mode.kind === 'ask' && asked, (text) => {
+  const { heard, blocked } = useVoiceReply((mode.kind === 'ask' && asked) || (mode.kind === 'pick-from' && fromAsked), (text) => {
     const choice = parseRoom(text)
     if (!choice) return false
-    choose(choice)
+    if (mode.kind !== 'pick-from') {
+      choose(choice)
+      return true
+    }
+    // The answer to "which room are you in?": never the destination, which the question itself named.
+    if (choice === 'where am i' || choice === mode.to) return false
+    startRoute(choice, mode.to)
     return true
   })
 
@@ -256,24 +268,63 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
       tell(room ? `You are in the ${room}.` : 'Looking around. Point the camera at the room.')
       return
     }
-    const route = routeTo(choice, room)
+    // A route only fits the room it was taught from, so never guess where the user is.
+    if (!room) {
+      const question = `Going to the ${choice}. Which room are you in now?`
+      setMode({ kind: 'pick-from', to: choice })
+      setStatus(question)
+      // Listen only once the question is over, so the microphone doesn't hear the phone.
+      setFromAsked(false)
+      say(question, () => setFromAsked(true))
+      return
+    }
+    startRoute(room, choice)
+  }
+
+  /** Follows the route taught from `from` to `to` (or the reverse of the way back), or says there is none. */
+  function startRoute(from: Room, to: Room) {
+    if (from === to) {
+      setMode({ kind: 'where' })
+      tell(`You are already in the ${to}.`)
+      return
+    }
+    const route = routeTo(to, from)
     announcer.current.reset()
     tracker.current.reset()
     wallSaid.current.clear()
-    if (route) {
-      tell(`Following your saved route to the ${choice}.`)
-      setMode({ kind: 'follow', route, leg: 0, stepsLeft: route.legs[0].steps, walking: false })
-    } else {
-      setMode({ kind: 'find', room: choice })
-      tell(`Looking for the ${choice}. Turn slowly.`)
+    if (!route) {
+      setMode({ kind: 'no-route', from, to })
+      tell(`There is no saved route from the ${from} to the ${to}. Ask someone to teach it, or I can search for the ${to} with the camera.`)
+      return
     }
+    // Saying the start lets the user stop at once if the camera got the room wrong.
+    tell(
+      route.reversed
+        ? `From the ${from} to the ${to}, using your route from the ${to}, walked the other way.`
+        : `From the ${from}, following your saved route to the ${to}.`,
+    )
+    setMode({ kind: 'follow', route, leg: 0, stepsLeft: route.legs[0].steps, walking: false })
   }
 
-  function startTeaching(to: Room) {
+  function startTeaching(from: Room, to: Room) {
+    if (from === to) return tell('Pick a different room to go to.')
     setTaught([])
     taughtWalls.current = []
-    setMode({ kind: 'teach', from: room, to })
-    tell(`Recording a route to the ${to}. Walk there at a normal pace, then tap Save.`)
+    setMode({ kind: 'teach', from, to })
+    tell(`Recording a route from the ${from} to the ${to}. Walk there at a normal pace, then tap Save.`)
+  }
+
+  /** A room button: what it means depends on the question being asked. */
+  function pickRoom(r: Room) {
+    if (mode.kind === 'ask') choose(r)
+    else if (mode.kind === 'pick-from') startRoute(r, mode.to)
+    else if (mode.kind === 'teach-pick') {
+      if (mode.from) startTeaching(mode.from, r)
+      else {
+        setMode({ kind: 'teach-pick', from: r })
+        tell(`Starting from the ${r}. Where does this route go?`)
+      }
+    }
   }
 
   function saveTaught() {
@@ -282,7 +333,7 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     if (!legs.length) return tell('No steps were recorded. Walk the route, then tap Save.')
     const saved = saveRoute({ id: String(Date.now()), from: mode.from, to: mode.to, legs, compass: hasCompass, savedAt: Date.now() })
     setRoutes(loadRoutes())
-    tell(saved ? `Route to the ${mode.to} saved.` : 'This browser could not save the route.')
+    tell(saved ? `Route from the ${mode.from} to the ${mode.to} saved.` : 'This browser could not save the route.')
     setMode({ kind: 'ask' })
   }
 
@@ -296,7 +347,9 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
 
   let banner: string
   if (mode.kind === 'ask') banner = blocked ? 'Which room? Tap one below.' : heard ? `Heard: “${heard}”` : 'Which room? Say it or tap one.'
-  else if (mode.kind === 'teach-pick') banner = 'Where does this route go?'
+  else if (mode.kind === 'pick-from') banner = heard ? `Heard: “${heard}”` : `Going to the ${mode.to}. Which room are you in now?`
+  else if (mode.kind === 'no-route') banner = `No saved route from the ${mode.from} to the ${mode.to}`
+  else if (mode.kind === 'teach-pick') banner = mode.from ? `From the ${mode.from}: where does this route go?` : 'Where does this route start?'
   else if (mode.kind === 'teach') {
     const legs = legsFromSteps(taught)
     banner = `Recording to the ${mode.to}: ${stepsPhrase(taught.length)}, ${legs.length > 1 ? `${legs.length - 1} turn${legs.length > 2 ? 's' : ''}` : 'no turns'}`
@@ -319,10 +372,10 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
       </div>
 
       <div className="nav-sheet home-sheet">
-        {(mode.kind === 'ask' || mode.kind === 'teach-pick') && (
+        {(mode.kind === 'ask' || mode.kind === 'teach-pick' || mode.kind === 'pick-from') && (
           <div className="home-rooms">
-            {ROOMS.map((r) => (
-              <button key={r} type="button" className="button" onClick={() => (mode.kind === 'ask' ? choose(r) : startTeaching(r))}>
+            {ROOMS.filter((r) => !(mode.kind === 'teach-pick' && r === mode.from)).map((r) => (
+              <button key={r} type="button" className="button" onClick={() => pickRoom(r)}>
                 {roomLabel(r)}
               </button>
             ))}
@@ -338,7 +391,7 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
           <ul className="home-routes" aria-label="Saved routes">
             {routes.map((r) => (
               <li key={r.id}>
-                {r.from ? roomLabel(r.from) : 'Anywhere'} → {roomLabel(r.to)}
+                {r.from ? roomLabel(r.from) : 'Unknown start (not used, teach again)'} → {roomLabel(r.to)}
                 <span className="sos-muted">
                   {r.legs.reduce((n, l) => n + l.steps, 0)} steps
                 </span>
@@ -380,9 +433,33 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
             </button>
           )}
           {mode.kind === 'ask' && (
-            <button type="button" className="button" onClick={() => setMode({ kind: 'teach-pick' })}>
+            <button
+              type="button"
+              className="button"
+              onClick={() => {
+                setMode({ kind: 'teach-pick', from: room })
+                tell(room ? `Starting from the ${room}. Where does this route go?` : 'Where does this route start?')
+              }}
+            >
               Teach a route
             </button>
+          )}
+          {mode.kind === 'no-route' && (
+            <>
+              <button type="button" className="button nav-go" onClick={() => startTeaching(mode.from, mode.to)}>
+                Teach this route
+              </button>
+              <button
+                type="button"
+                className="button"
+                onClick={() => {
+                  setMode({ kind: 'find', room: mode.to })
+                  tell(`Looking for the ${mode.to}. Turn slowly.`)
+                }}
+              >
+                Search with the camera
+              </button>
+            </>
           )}
           {mode.kind !== 'ask' && (
             <button
