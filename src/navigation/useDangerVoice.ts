@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Frame } from '../Viewport'
 import { allHazards, buzz, HazardAnnouncer, hazardPhrase, isUrgent, type Hazard } from './hazards'
+import { SceneTracker } from './sceneTracker'
 import { say, speaking } from './voice'
 
 const KEY = 'iris.speakDangers'
@@ -43,6 +44,8 @@ interface Options {
  */
 export function useDangerVoice({ frame, names, stairClasses, surfaceNames, hazardNames, enabled }: Options): Hazard[] {
   const announcer = useRef(new HazardAnnouncer())
+  // Kept for the component's life; it smooths walls over frames, and render reads it too.
+  const [tracker] = useState(() => new SceneTracker())
   const hazards = frame
     ? allHazards({
         objects: frame.objects,
@@ -53,6 +56,7 @@ export function useDangerVoice({ frame, names, stairClasses, surfaceNames, hazar
         detected: frame.hazards,
         detectedNames: hazardNames,
         fire: frame.fire,
+        tracker,
       })
     : []
 
@@ -67,12 +71,13 @@ export function useDangerVoice({ frame, names, stairClasses, surfaceNames, hazar
       detected: frame.hazards,
       detectedNames: hazardNames,
       fire: frame.fire,
+      tracker,
     })
     const h = announcer.current.pick(speaking() ? found.filter(isUrgent) : found)
     if (!h) return
     say(hazardPhrase(h))
     buzz(h)
-  }, [frame, names, stairClasses, surfaceNames, hazardNames, enabled])
+  }, [frame, names, stairClasses, surfaceNames, hazardNames, enabled, tracker])
 
   return hazards
 }

@@ -30,7 +30,7 @@ const CLEAR_SHARE = 0.55
  * Closer than this, a wall is a "stop" rather than a heads-up. A phone at chest height can't see
  * the ground much closer than 1.5 m, so this is about three or four steps.
  */
-const WALL_NEAR_M = 2.5
+export const WALL_NEAR_M = 2.5
 const WALL_MAX_M = 6
 /** Share of centre columns where the ground ends in open air, for an edge warning. */
 const EDGE_SHARE = 0.35

@@ -1,6 +1,7 @@
 import type { DetectResult, SegmentResult } from '../yolo/types'
 import { distancePhrase, groundDistance } from './distance'
 import { sceneHazards } from './scene'
+import type { SceneTracker } from './sceneTracker'
 
 export type Side = 'left' | 'ahead' | 'right'
 
@@ -123,6 +124,8 @@ export interface HazardSources {
   detected?: DetectResult | null
   detectedNames?: string[]
   fire?: Hazard | null
+  /** Smooths walls, edges and water over recent frames; without one, each frame stands alone. */
+  tracker?: SceneTracker
 }
 
 /** Every hazard in the latest frame, from every model, most pressing first. */
@@ -131,7 +134,11 @@ export function allHazards(s: HazardSources): Hazard[] {
   return [
     ...(s.fire ? [s.fire] : []),
     ...(stairs ? [stairs] : []),
-    ...(s.surfaces && s.surfaceNames?.length ? sceneHazards(s.surfaces, s.surfaceNames) : []),
+    ...(s.surfaces && s.surfaceNames?.length
+      ? s.tracker
+        ? s.tracker.update(s.surfaces, s.surfaceNames)
+        : sceneHazards(s.surfaces, s.surfaceNames)
+      : []),
     ...(s.objects ? findHazards(s.objects, s.names) : []),
     ...(s.detected ? findHazards(s.detected, s.detectedNames ?? []) : []),
   ].sort(mostPressing)
@@ -139,10 +146,21 @@ export function allHazards(s: HazardSources): Hazard[] {
 
 const where = (h: Hazard) => (h.side === 'ahead' ? 'ahead' : `on your ${h.side}`)
 const away = (h: Hazard) => (h.distance ? `, ${distancePhrase(h.distance)}` : '')
-const turn = (side: Side | null | undefined) =>
-  side === 'left' || side === 'right' ? ` The way is clear on your ${side}. Turn ${side}.` : ' Turn around, or feel for a way past.'
+/**
+ * Which way to go around. Walking freely, the clear side is the way to turn. Following a route,
+ * the route decides the turns, so this only says where the gap is.
+ */
+const turn = (side: Side | null | undefined, onRoute: boolean) =>
+  side === 'left' || side === 'right'
+    ? onRoute
+      ? ` There's space on your ${side} to get around it.`
+      : ` The way is clear on your ${side}. Turn ${side}.`
+    : onRoute
+      ? ' Feel for a way past.'
+      : ' Turn around, or feel for a way past.'
 
-export function hazardPhrase(h: Hazard): string {
+/** What to say about a hazard. `onRoute`: a route is guiding the turns, so don't suggest one. */
+export function hazardPhrase(h: Hazard, { onRoute = false }: { onRoute?: boolean } = {}): string {
   switch (h.name) {
     case 'fire':
       return h.side === 'ahead' ? 'Danger! Fire ahead. Stop and move back.' : `Danger! Fire on your ${h.side}. Move away from it.`
@@ -161,7 +179,9 @@ export function hazardPhrase(h: Hazard): string {
   if (h.barrier && h.name === 'door') return `Door ahead${away(h)}. Reach out for the handle.`
   if (h.barrier) {
     const thing = h.name === 'wall' ? 'Wall' : capitalize(h.name)
-    return h.near ? `Stop. ${thing} in front of you${away(h)}.${turn(h.open)}` : `${thing} ahead${away(h)}.${h.open ? turn(h.open) : ''}`
+    return h.near
+      ? `Stop. ${thing} in front of you${away(h)}.${turn(h.open, onRoute)}`
+      : `${thing} ahead${away(h)}.${h.open ? turn(h.open, onRoute) : ''}`
   }
   if (h.side === 'ahead') return h.near ? `Slow down, ${h.name} ahead${away(h)}.` : `${capitalize(h.name)} ahead${away(h)}.`
   return `${capitalize(h.name)} on your ${h.side}.`

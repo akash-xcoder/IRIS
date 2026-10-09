@@ -1,10 +1,13 @@
 import { meanHeading, turnBetween } from './pdr'
+import { WALL_AT_END_M } from './routeGuide'
 import type { Room } from './rooms'
 
 /** A straight stretch of a route: walk `steps` steps facing `heading`. */
 export interface Leg {
   heading: number
   steps: number
+  /** The camera saw a wall just ahead at the end of this leg while it was taught. Older routes lack it. */
+  endsAtWall?: boolean
 }
 
 export interface HomeRoute {
@@ -57,8 +60,12 @@ export function routeTo(to: Room, from: Room | null): HomeRoute | null {
 /** A change of direction bigger than this starts a new leg. */
 const TURN_DEG = 40
 
-/** Splits a walk, recorded as one heading per step, into straight legs. */
-export function legsFromSteps(headings: number[]): Leg[] {
+/**
+ * Splits a walk, recorded as one heading per step, into straight legs. `walls` holds, per step,
+ * the distance in metres to a wall the camera saw ahead (null for none); with it, each leg notes
+ * whether it ended facing a wall, which guides the walk later.
+ */
+export function legsFromSteps(headings: number[], walls?: (number | null)[]): Leg[] {
   const legs: { headings: number[] }[] = []
   for (const h of headings) {
     const leg = legs[legs.length - 1]
@@ -72,5 +79,12 @@ export function legsFromSteps(headings: number[]): Leg[] {
     if (prev && leg.headings.length < 2) prev.headings.push(...leg.headings)
     else merged.push(leg)
   }
-  return merged.map((l) => ({ heading: Math.round(meanHeading(l.headings)), steps: l.headings.length }))
+  let end = 0
+  return merged.map((l) => {
+    end += l.headings.length
+    const leg: Leg = { heading: Math.round(meanHeading(l.headings)), steps: l.headings.length }
+    // The last two steps before the turn: was a wall right there?
+    if (walls?.length) leg.endsAtWall = walls.slice(Math.max(0, end - 2), end).some((d) => d !== null && d <= WALL_AT_END_M)
+    return leg
+  })
 }

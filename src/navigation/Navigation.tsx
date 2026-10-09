@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { DetectResult, SegmentResult } from '../yolo/types'
 import { allHazards, buzz, HazardAnnouncer, hazardPhrase, isUrgent, type Hazard } from './hazards'
+import { SceneTracker } from './sceneTracker'
 import {
   findRoute,
   formatDistance,
@@ -113,6 +114,8 @@ export function Navigation({
   const [sheetHeight, setSheetHeight] = useState(140)
   const sheet = useRef<HTMLDivElement>(null)
   const announcer = useRef(new HazardAnnouncer())
+  // Kept for the component's life; it smooths walls over frames, and render reads it too.
+  const [tracker] = useState(() => new SceneTracker())
   const [notice, setNotice] = useState<string | null>(null)
   const [customFrom, setCustomFrom] = useState('')
   const mapEl = useRef<HTMLDivElement>(null)
@@ -241,15 +244,15 @@ export function Navigation({
 
   // Warn about obstacles the camera sees, between directions rather than over them. Fire and drops
   // can't wait, so they cut in.
-  const hazards = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire })
+  const hazards = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire, tracker })
   useEffect(() => {
     if (mode === 'overview') return
-    const found = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire })
+    const found = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire, tracker })
     const h = announcer.current.pick(speaking() ? found.filter(isUrgent) : found)
     if (!h) return
-    if (!muted) say(hazardPhrase(h))
+    if (!muted) say(hazardPhrase(h, { onRoute: true }))
     buzz(h)
-  }, [detections, names, surfaces, stairClasses, surfaceNames, hazardBoxes, hazardNames, fire, mode, muted])
+  }, [detections, names, surfaces, stairClasses, surfaceNames, hazardBoxes, hazardNames, fire, tracker, mode, muted])
 
   // The inset sits just above the bottom sheet, whose height changes with its content.
   useEffect(() => {
@@ -344,7 +347,7 @@ export function Navigation({
         {camera}
         {hazards.length > 0 && (
           <p className="nav-hazard" data-near={hazards[0].near ? '' : undefined}>
-            {hazardPhrase(hazards[0])}
+            {hazardPhrase(hazards[0], { onRoute: true })}
           </p>
         )}
       </div>

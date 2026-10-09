@@ -5,6 +5,8 @@ import { hush, say, speaking } from '../navigation/voice'
 import type { DetectResult, SegmentResult } from '../yolo/types'
 import { turnBetween, turnPhrase, watchWalking } from './pdr'
 import { doorAhead, findLandmark, guessRoom, landmarkPhrase, parseRoom, ROOMS, type Room, type Sighting } from './rooms'
+import { SceneTracker } from '../navigation/sceneTracker'
+import { adviseWall, thenPhrase } from './routeGuide'
 import { deleteRoute, legsFromSteps, loadRoutes, routeTo, saveRoute, type HomeRoute } from './routes'
 
 type Mode =
@@ -57,6 +59,12 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
   const heading = useRef(0)
   const said = useRef<{ text: string; at: number }>({ text: '', at: -Infinity })
   const announcer = useRef(new HazardAnnouncer())
+  const tracker = useRef(new SceneTracker())
+  /** Metres to the wall the camera steadily sees ahead, or null. Recorded per step while teaching. */
+  const wallAhead = useRef<number | null>(null)
+  const taughtWalls = useRef<(number | null)[]>([])
+  /** Route wall guidance already given, so each is said once per leg. */
+  const wallSaid = useRef(new Set<string>())
   const blindTurn = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const step = useRef<() => void>(() => {})
 
@@ -145,16 +153,41 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
   }, [objects, surfaces, mode, room])
 
   // Close obstacles (stairs, walls, people, furniture underfoot) are worth a warning on any route.
-  // Fire and drops are announced whatever the guide is doing, cutting in if need be.
+  // Fire and drops are announced whatever the guide is doing, cutting in if need be. Following a
+  // route, a wall ahead is checked against the route: it may be the turn, or something new.
   useEffect(() => {
     const moving = mode.kind === 'find' || mode.kind === 'follow'
-    const found = allHazards({ objects, names: objectNames, surfaces, stairClasses, surfaceNames, fire })
-    const wanted = found.filter((h) => isUrgent(h) || (moving && h.near && !speaking()))
-    const h = announcer.current.pick(wanted)
+    const found = allHazards({ objects, names: objectNames, surfaces, stairClasses, surfaceNames, fire, tracker: tracker.current })
+    const wall = found.find((h) => h.barrier && h.side === 'ahead') ?? null
+    wallAhead.current = wall?.distance ?? null
+
+    const urgent = announcer.current.pick(found.filter(isUrgent))
+    if (urgent) {
+      say(hazardPhrase(urgent))
+      buzz(urgent)
+      return
+    }
+    if (mode.kind === 'follow' && mode.walking && wall) {
+      const advice = adviseWall(mode.route, mode.leg, mode.stepsLeft, wall)
+      const key = advice && `${mode.route.id}:${mode.leg}:${advice.kind}`
+      if (advice && key && !wallSaid.current.has(key)) {
+        wallSaid.current.add(key)
+        if (advice.kind === 'resync') setMode({ ...mode, stepsLeft: advice.stepsLeft })
+        tell(advice.text)
+        buzz(wall)
+        return
+      }
+      // The expected wall, already spoken about: nothing more to say about it.
+      if (advice) return
+    }
+    if (!moving || speaking()) return
+    const h = announcer.current.pick(found.filter((x) => x.near && !(mode.kind === 'follow' && x.barrier && x === wall)))
     if (!h) return
-    say(hazardPhrase(h))
+    say(hazardPhrase(h, { onRoute: mode.kind === 'follow' }))
     buzz(h)
-  }, [objects, surfaces, objectNames, surfaceNames, stairClasses, fire, mode.kind])
+    // tell() only reads refs and setters; mode is read whole for the route.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [objects, surfaces, objectNames, surfaceNames, stairClasses, fire, mode])
 
   // Following a route: face each leg's heading, then count its steps down.
   const following = mode.kind === 'follow' ? mode : null
@@ -164,7 +197,7 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     const target = route.legs[leg].heading
     const startWalking = () => {
       setMode((m) => (m.kind === 'follow' && m.leg === leg ? { ...m, walking: true } : m))
-      tell(`Walk ${stepsPhrase(route.legs[leg].steps)} forward.`)
+      tell(`Walk ${stepsPhrase(route.legs[leg].steps)} forward${thenPhrase(route, leg)}.`)
     }
     // With a compass, turn relative to where the user faces now; without, relative to the last leg.
     const turn = hasCompass
@@ -195,12 +228,14 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     step.current = () => {
       if (mode.kind === 'teach') {
         setTaught((t) => [...t, heading.current])
+        taughtWalls.current = [...taughtWalls.current, wallAhead.current]
         return
       }
       if (mode.kind !== 'follow' || !mode.walking) return
       const left = mode.stepsLeft - 1
       if (left > 0) {
-        if (left <= 2) tell(left === 1 ? 'One more step.' : 'Two more steps.')
+        // The turn is known ahead of time, so say it before the user gets there.
+        if (left <= 2) tell(`${left === 1 ? 'One more step' : 'Two more steps'}${thenPhrase(mode.route, mode.leg)}.`)
         setMode({ ...mode, stepsLeft: left })
         return
       }
@@ -223,6 +258,8 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     }
     const route = routeTo(choice, room)
     announcer.current.reset()
+    tracker.current.reset()
+    wallSaid.current.clear()
     if (route) {
       tell(`Following your saved route to the ${choice}.`)
       setMode({ kind: 'follow', route, leg: 0, stepsLeft: route.legs[0].steps, walking: false })
@@ -234,13 +271,14 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
 
   function startTeaching(to: Room) {
     setTaught([])
+    taughtWalls.current = []
     setMode({ kind: 'teach', from: room, to })
     tell(`Recording a route to the ${to}. Walk there at a normal pace, then tap Save.`)
   }
 
   function saveTaught() {
     if (mode.kind !== 'teach') return
-    const legs = legsFromSteps(taught)
+    const legs = legsFromSteps(taught, taughtWalls.current)
     if (!legs.length) return tell('No steps were recorded. Walk the route, then tap Save.')
     const saved = saveRoute({ id: String(Date.now()), from: mode.from, to: mode.to, legs, compass: hasCompass, savedAt: Date.now() })
     setRoutes(loadRoutes())
