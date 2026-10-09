@@ -2,3 +2,5 @@
 .weights
 node_modules
 dist
+# Local secrets (the service-role key) never leave this machine
+.env*
