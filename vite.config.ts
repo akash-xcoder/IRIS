@@ -15,11 +15,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    allowedHosts: true,
     headers: isolation,
   },
   preview: {
     host: '0.0.0.0',
     port: 3000,
+    allowedHosts: true,
     headers: isolation,
   },
   // ONNX Runtime resolves its .wasm files relative to import.meta.url, which pre-bundling breaks.
