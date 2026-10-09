@@ -1,0 +1,8 @@
+{
+  "name": "IRIS - Assistive Vision & Navigation",
+  "description": "Real-time object detection, hazard avoidance, indoor & outdoor navigation, and fall safety running entirely in your browser.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

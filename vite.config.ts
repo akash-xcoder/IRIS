@@ -12,8 +12,16 @@ const isolation = {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server: { headers: isolation },
-  preview: { headers: isolation },
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    headers: isolation,
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 3000,
+    headers: isolation,
+  },
   // ONNX Runtime resolves its .wasm files relative to import.meta.url, which pre-bundling breaks.
   optimizeDeps: { exclude: ['onnxruntime-web'] },
   worker: { format: 'es' },
