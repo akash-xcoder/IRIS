@@ -36,11 +36,11 @@ function post(message: WorkerResponse, transfer: Transferable[] = []) {
 const FALLBACK_MODELS_URL: string =
   import.meta.env.VITE_MODELS_FALLBACK_URL ?? 'https://raw.githubusercontent.com/akash-xcoder/IRIS/9d68e388f6e31afd89ee4c9f81370d98dff69dd0/public/models/'
 
-function fetchModelFile(id: number, url: string): Promise<Uint8Array> {
+function fetchModelFile(id: number, url: string, expectedBytes: number): Promise<Uint8Array> {
   const urls = [url]
   const file = url.split('?')[0].split('/').pop()
   if (FALLBACK_MODELS_URL && file) urls.push(FALLBACK_MODELS_URL + file)
-  return fetchModel(urls, (fraction) => post({ id, type: 'progress', fraction }))
+  return fetchModel(urls, (fraction) => post({ id, type: 'progress', fraction }), expectedBytes)
 }
 
 async function webgpuUnavailableReason(): Promise<string | null> {
@@ -75,7 +75,7 @@ async function load(id: number, next: ModelInfo, url: string, preference: Engine
   await session?.release()
   session = null
   model = null
-  const bytes = await fetchModelFile(id, url)
+  const bytes = await fetchModelFile(id, url, next.bytes)
   const result = await createSession(bytes, preference)
   model = next
   // The first run compiles GPU shaders and allocates buffers; do it now rather than on the first frame.

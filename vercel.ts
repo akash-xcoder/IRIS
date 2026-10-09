@@ -4,6 +4,8 @@ export const config: VercelConfig = {
   framework: 'vite',
   buildCommand: 'npm run build',
   outputDirectory: 'dist',
+  // The family dashboard is a route inside the single-page app.
+  rewrites: [routes.rewrite('/family', '/index.html')],
   headers: [
     // Cross-origin isolation lets ONNX Runtime run multi-threaded WebAssembly.
     routes.header('/(.*)', [

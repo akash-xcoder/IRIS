@@ -94,6 +94,12 @@ export function parseTrip(text: string): TripRequest | null {
   return { from: null, to: titleCase(t) }
 }
 
+/** Whether a spoken command is a call for help ("help", "I need help", "call my family") rather than a trip. */
+export function asksForHelp(text: string): boolean {
+  const t = text.toLowerCase().replace(/[.,!?]/g, ' ').replace(/\s+/g, ' ').trim()
+  return /^(?:please )?(?:help(?: me)?|i need help|i need some help|sos|s o s|emergency|call (?:my )?(?:family|mom|mum|dad|parents))(?: please)?$/.test(t)
+}
+
 /** What a spoken reply to the SOS alert asks for. "Don't send" is checked before "send", so it can't be misread. */
 export function sosReply(text: string): 'send' | 'cancel' | null {
   const t = text.toLowerCase().replace(/[’]/g, "'")

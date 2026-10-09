@@ -1,32 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadContacts, saveContacts, type Contacts } from './contacts'
-
-/** Demo family features: the switches remember their state on this device, but nothing is sent. */
-interface Family {
-  shareLocation: boolean
-  locationWithSos: boolean
-  tripStarts: boolean
-  lowBattery: boolean
-}
-
-const DEFAULTS: Family = { shareLocation: false, locationWithSos: true, tripStarts: false, lowBattery: true }
-const KEY = 'yooolo.family'
-
-function load(): Family {
-  try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Family>) }
-  } catch {
-    return DEFAULTS
-  }
-}
-
-function save(family: Family) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(family))
-  } catch {
-    // Private windows and blocked storage: the switches just won't be remembered.
-  }
-}
+import { loadFamily, saveFamily, type Family } from './family'
 
 const SWITCHES: { key: keyof Family; label: string }[] = [
   { key: 'shareLocation', label: 'Share live location with parents' },
@@ -36,7 +10,7 @@ const SWITCHES: { key: keyof Family; label: string }[] = [
 ]
 
 export function FamilySettings() {
-  const [family, setFamily] = useState(load)
+  const [family, setFamily] = useState(loadFamily)
   const [confirming, setConfirming] = useState(false)
   const [contacts, setContacts] = useState(loadContacts)
 
@@ -51,7 +25,7 @@ export function FamilySettings() {
     if (key === 'shareLocation' && on) return setConfirming(true)
     const next = { ...family, [key]: on }
     setFamily(next)
-    save(next)
+    saveFamily(next)
   }
 
   function confirmSharing(on: boolean) {
@@ -59,7 +33,7 @@ export function FamilySettings() {
     if (!on) return
     const next = { ...family, shareLocation: true }
     setFamily(next)
-    save(next)
+    saveFamily(next)
   }
 
   return (
@@ -73,8 +47,10 @@ export function FamilySettings() {
           </label>
         ))}
         <p className="hint">
-          {family.shareLocation ? 'Mom and Dad can see where you are while the app is open. ' : ''}
-          Demo only: nothing is sent.
+          {family.shareLocation
+            ? 'Your family sees where you are on their dashboard while this app is open. '
+            : 'Turn on live location so your family can see where you are. '}
+          Needs you signed in under Family alerts. Trip and battery alerts are a demo.
         </p>
       </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { canListen, listen, parseTrip, type Listener, type TripRequest } from './voice'
+import { asksForHelp, canListen, listen, parseTrip, type Listener, type TripRequest } from './voice'
 
 type State =
   | { kind: 'closed' }
@@ -8,8 +8,11 @@ type State =
 
 const EXAMPLE = '“Panvel to Pune”'
 
-/** A floating mic button: say a trip, and directions open. A typed box covers browsers without speech recognition. */
-export function VoiceButton({ onTrip }: { onTrip: (trip: TripRequest) => void }) {
+/**
+ * A floating mic button: say a trip, and directions open; say "help", and the family is alerted.
+ * A typed box covers browsers without speech recognition.
+ */
+export function VoiceButton({ onTrip, onHelp }: { onTrip: (trip: TripRequest) => void; onHelp: () => void }) {
   const [state, setState] = useState<State>({ kind: 'closed' })
   const [typed, setTyped] = useState('')
   const listener = useRef<Listener | null>(null)
@@ -17,6 +20,11 @@ export function VoiceButton({ onTrip }: { onTrip: (trip: TripRequest) => void })
   useEffect(() => () => listener.current?.stop(), [])
 
   function go(text: string) {
+    if (asksForHelp(text)) {
+      setState({ kind: 'closed' })
+      setTyped('')
+      return onHelp()
+    }
     const trip = parseTrip(text)
     if (!trip) return setState({ kind: 'idle', message: `Say a start and destination, like ${EXAMPLE}.`, error: true })
     setState({ kind: 'closed' })

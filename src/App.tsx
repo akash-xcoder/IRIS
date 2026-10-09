@@ -3,7 +3,10 @@ import { HomeGuide } from './home/HomeGuide'
 import { Navigation } from './navigation/Navigation'
 import { askForMotionOnFirstTap, watchFalls } from './safety/fall'
 import { FallAlert } from './safety/FallAlert'
+import { FamilyAccount } from './safety/FamilyAccount'
 import { FamilySettings } from './safety/FamilySettings'
+import { useLocationSharing } from './family/useLocationSharing'
+import type { AlertKind } from './family/supabase'
 import { applyTheme, currentTheme, type Theme } from './theme'
 import { VoiceButton } from './navigation/VoiceButton'
 import type { TripRequest } from './navigation/voice'
@@ -110,7 +113,8 @@ export default function App() {
   const [fps, setFps] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [trip, setTrip] = useState<TripRequest | null>(null)
-  const [fallen, setFallen] = useState(false)
+  /** The SOS alert on screen: after a fall, or when the user asks for help. */
+  const [sos, setSos] = useState<AlertKind | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [theme, setTheme] = useState<Theme>(currentTheme)
 
@@ -133,15 +137,16 @@ export default function App() {
     setShaking(true)
     setTimeout(() => {
       setShaking(false)
-      setFallen(true)
+      setSos('fall')
     }, SHAKE_DEMO_MS)
   }
-  const closeFallAlert = useCallback(() => setFallen(false), [])
+  const closeFallAlert = useCallback(() => setSos(null), [])
+  useLocationSharing()
 
   // A fall opens the SOS alert; while it's open, further jolts are ignored.
   useEffect(() => {
     const stopAsking = askForMotionOnFirstTap()
-    const stopWatching = watchFalls(() => setFallen(true))
+    const stopWatching = watchFalls(() => setSos('fall'))
     return () => {
       stopAsking()
       stopWatching()
@@ -636,6 +641,8 @@ export default function App() {
             </div>
             <div className="settings-core">{coreSettings('drawer')}</div>
 
+            <FamilyAccount />
+
             <FamilySettings />
 
             {/* Laptops only: phones test the alert with a real fall. */}
@@ -647,7 +654,7 @@ export default function App() {
                   className="button"
                   onClick={() => {
                     setSettingsOpen(false)
-                    setFallen(true)
+                    setSos('fall')
                   }}
                 >
                   Test fall alert
@@ -692,7 +699,7 @@ export default function App() {
             className="shake-fab"
             aria-label="Simulate a fall"
             title="Simulate a fall"
-            disabled={shaking || fallen}
+            disabled={shaking || sos !== null}
             onClick={simulateShake}
           >
             <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
@@ -708,11 +715,11 @@ export default function App() {
               Find a room at home
             </span>
           </button>
-          <VoiceButton onTrip={startTrip} />
+          <VoiceButton onTrip={startTrip} onHelp={() => setSos('help')} />
         </div>
       )}
 
-      {fallen && <FallAlert onClose={closeFallAlert} />}
+      {sos && <FallAlert kind={sos} onClose={closeFallAlert} />}
     </div>
   )
 }

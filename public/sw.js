@@ -2,8 +2,8 @@
 // indoor guidance, room recognition and the fall alert work without internet. Outdoor maps and
 // routes (Google) and Chrome's speech recognition (Google's servers) still need a connection.
 
-// Bump this to make every device fetch the models again, e.g. after re-exporting one under the same name.
-const CACHE = 'yooolo-v1'
+// Bump this to clear what's cached here on every device. Models aren't cached here (see below).
+const CACHE = 'yooolo-v2'
 const scope = new URL(self.registration.scope)
 const at = (path) => new URL(path, scope).pathname
 
@@ -25,10 +25,11 @@ self.addEventListener('fetch', (event) => {
   const request = event.request
   const url = new URL(request.url)
   if (request.method !== 'GET' || url.origin !== scope.origin) return
-  // Fingerprinted build files and the large models never change under one URL: serve them from the
-  // cache. The page and the model list may change, so try the network first and fall back offline.
-  const fixed =
-    url.pathname.startsWith(at('assets/')) || url.pathname.startsWith(at('samples/')) || url.pathname.endsWith('.onnx')
+  // The model worker keeps its own copy of each model (src/yolo/fetchModel.ts); a second one here would waste space.
+  if (url.pathname.endsWith('.onnx')) return
+  // Fingerprinted build files never change under one URL: serve them from the cache. The page and
+  // the model list may change, so try the network first and fall back offline.
+  const fixed = url.pathname.startsWith(at('assets/')) || url.pathname.startsWith(at('samples/'))
   event.respondWith(fixed ? cacheFirst(request) : networkFirst(request))
 })
 
@@ -36,9 +37,7 @@ async function cacheFirst(request) {
   const hit = await caches.match(request)
   if (hit) return hit
   const response = await fetch(request)
-  // Never keep an HTML page under a model URL: some hosts answer a missing file with index.html (200).
-  const isHtml = /text\/html/i.test(response.headers.get('Content-Type') ?? '')
-  if (response.ok && !(request.url.endsWith('.onnx') && isHtml)) (await caches.open(CACHE)).put(request, response.clone())
+  if (response.ok) (await caches.open(CACHE)).put(request, response.clone())
   return response
 }
 
