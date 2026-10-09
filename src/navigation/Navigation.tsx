@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { DetectResult, SegmentResult } from '../yolo/types'
-import { allHazards, buzz, HazardAnnouncer, hazardPhrase } from './hazards'
+import { allHazards, buzz, HazardAnnouncer, hazardPhrase, isUrgent, type Hazard } from './hazards'
 import {
   findRoute,
   formatDistance,
@@ -85,6 +85,10 @@ interface NavigationProps {
   /** The latest boxes from the hazard detector (potholes, ladders) and its class names. */
   hazardBoxes: DetectResult | null
   hazardNames: string[]
+  /** The surface model's class names, for walls, edges and water. */
+  surfaceNames: readonly string[]
+  /** Flames seen by the camera. */
+  fire: Hazard | null
 }
 
 export function Navigation({
@@ -97,6 +101,8 @@ export function Navigation({
   stairClasses,
   hazardBoxes,
   hazardNames,
+  surfaceNames,
+  fire,
 }: NavigationProps) {
   const [plan, setPlan] = useState<Plan>({ kind: trip.from ? 'routing' : 'locating' })
   const [mode, setMode] = useState<Mode>('overview')
@@ -233,15 +239,17 @@ export function Navigation({
     }
   }, [route, mode, progress, muted, trip.to])
 
-  // Warn about obstacles the camera sees, between directions rather than over them.
-  const hazards = allHazards(detections, names, surfaces, stairClasses, hazardBoxes, hazardNames)
+  // Warn about obstacles the camera sees, between directions rather than over them. Fire and drops
+  // can't wait, so they cut in.
+  const hazards = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire })
   useEffect(() => {
-    if (mode === 'overview' || speaking()) return
-    const h = announcer.current.pick(allHazards(detections, names, surfaces, stairClasses, hazardBoxes, hazardNames))
+    if (mode === 'overview') return
+    const found = allHazards({ objects: detections, names, surfaces, stairClasses, surfaceNames, detected: hazardBoxes, detectedNames: hazardNames, fire })
+    const h = announcer.current.pick(speaking() ? found.filter(isUrgent) : found)
     if (!h) return
     if (!muted) say(hazardPhrase(h))
     buzz(h)
-  }, [detections, names, surfaces, stairClasses, hazardBoxes, hazardNames, mode, muted])
+  }, [detections, names, surfaces, stairClasses, surfaceNames, hazardBoxes, hazardNames, fire, mode, muted])
 
   // The inset sits just above the bottom sheet, whose height changes with its content.
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { allHazards, HazardAnnouncer, hazardPhrase } from '../navigation/hazards'
+import { allHazards, buzz, HazardAnnouncer, hazardPhrase, isUrgent, type Hazard } from '../navigation/hazards'
 import { useVoiceReply } from '../navigation/useVoiceReply'
 import { hush, say, speaking } from '../navigation/voice'
 import type { DetectResult, SegmentResult } from '../yolo/types'
@@ -39,10 +39,12 @@ interface HomeGuideProps {
   objectNames: string[]
   surfaceNames: string[]
   stairClasses: readonly number[]
+  /** Flames seen by the camera. */
+  fire: Hazard | null
 }
 
 /** Indoor guidance: which room you're in, finding a room by sight, and following routes taught by family. */
-export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, surfaceNames, stairClasses }: HomeGuideProps) {
+export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, surfaceNames, stairClasses, fire }: HomeGuideProps) {
   const [mode, setMode] = useState<Mode>({ kind: 'ask' })
   const [asked, setAsked] = useState(false)
   const [room, setRoom] = useState<Room | null>(null)
@@ -142,13 +144,17 @@ export function HomeGuide({ onClose, camera, objects, surfaces, objectNames, sur
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [objects, surfaces, mode, room])
 
-  // Close obstacles (stairs, people, furniture underfoot) are worth a warning on any route.
+  // Close obstacles (stairs, walls, people, furniture underfoot) are worth a warning on any route.
+  // Fire and drops are announced whatever the guide is doing, cutting in if need be.
   useEffect(() => {
-    if ((mode.kind !== 'find' && mode.kind !== 'follow') || speaking()) return
-    const close = allHazards(objects, objectNames, surfaces, stairClasses).filter((h) => h.near)
-    const h = announcer.current.pick(close)
-    if (h) say(hazardPhrase(h))
-  }, [objects, surfaces, objectNames, stairClasses, mode.kind])
+    const moving = mode.kind === 'find' || mode.kind === 'follow'
+    const found = allHazards({ objects, names: objectNames, surfaces, stairClasses, surfaceNames, fire })
+    const wanted = found.filter((h) => isUrgent(h) || (moving && h.near && !speaking()))
+    const h = announcer.current.pick(wanted)
+    if (!h) return
+    say(hazardPhrase(h))
+    buzz(h)
+  }, [objects, surfaces, objectNames, surfaceNames, stairClasses, fire, mode.kind])
 
   // Following a route: face each leg's heading, then count its steps down.
   const following = mode.kind === 'follow' ? mode : null

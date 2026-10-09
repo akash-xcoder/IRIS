@@ -101,9 +101,12 @@ type MotionPermission = { requestPermission?: () => Promise<'granted' | 'denied'
  */
 export function askForMotionOnFirstTap(): () => void {
   const Motion = (window as unknown as { DeviceMotionEvent?: MotionPermission }).DeviceMotionEvent
+  // Orientation (the phone's tilt) lets hazard warnings estimate distances; it asks separately.
+  const Orientation = (window as unknown as { DeviceOrientationEvent?: MotionPermission }).DeviceOrientationEvent
   if (typeof Motion?.requestPermission !== 'function') return () => {}
   const ask = () => {
     Motion.requestPermission?.().catch(() => {})
+    Orientation?.requestPermission?.().catch(() => {})
     window.removeEventListener('pointerdown', ask)
   }
   window.addEventListener('pointerdown', ask)

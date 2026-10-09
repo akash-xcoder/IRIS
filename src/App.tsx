@@ -9,6 +9,8 @@ import { useLocationSharing } from './family/useLocationSharing'
 import type { AlertKind } from './family/supabase'
 import { applyTheme, currentTheme, type Theme } from './theme'
 import { VoiceButton } from './navigation/VoiceButton'
+import { hazardPhrase, isUrgent } from './navigation/hazards'
+import { useDangerVoice, useSpeakDangers } from './navigation/useDangerVoice'
 import type { TripRequest } from './navigation/voice'
 import { Viewport, type Frame, type Source } from './Viewport'
 import { classColor, coverage, HAZARD_COLOR, SURFACE_COLOR } from './yolo/draw'
@@ -285,6 +287,17 @@ export default function App() {
   // One surface model finds both walls and stairs, so it runs while either is wanted.
   const runSurfaces = showWalls || showStairs
   const counts = tally(frame, names)
+  const surfaceNames = wallModel?.names ?? NO_NAMES
+  // On the camera screen, dangers are spoken here; trips and the home guide speak their own.
+  const [speakDangers, setSpeakDangers] = useSpeakDangers()
+  const dangers = useDangerVoice({
+    frame,
+    names,
+    stairClasses: showStairs ? stairClasses : NONE,
+    surfaceNames,
+    hazardNames,
+    enabled: speakDangers && source !== null && !trip && !home,
+  })
   const wallShare = showWalls && frame?.surfaces ? coverage(frame.surfaces, wallClasses) : null
   const loading =
     status.kind === 'loading' && model
@@ -334,6 +347,10 @@ export default function App() {
           />
           <span className="swatch" style={{ background: HAZARD_COLOR }} />
           Detect ladders
+        </label>
+        <label className="toggle">
+          <input type="checkbox" checked={speakDangers} onChange={(e) => setSpeakDangers(e.target.checked)} />
+          Speak danger warnings
         </label>
         <p className="hint">
           {wallModel
@@ -494,6 +511,13 @@ export default function App() {
       <main className="workspace">
         <section className="stage" aria-label="Detection view">
           {!trip && !home && viewport}
+
+          {/* What was just spoken, for anyone helping with sight. */}
+          {dangers.length > 0 && (
+            <p className="danger-banner" data-urgent={isUrgent(dangers[0]) || undefined}>
+              {hazardPhrase(dangers[0])}
+            </p>
+          )}
 
           <dl className="readout">
             <div className="metric">
@@ -680,6 +704,8 @@ export default function App() {
           stairClasses={showStairs ? stairClasses : NONE}
           hazardBoxes={frame?.hazards ?? null}
           hazardNames={hazardNames}
+          surfaceNames={surfaceNames}
+          fire={frame?.fire ?? null}
         />
       ) : home ? (
         <HomeGuide
@@ -688,8 +714,9 @@ export default function App() {
           objects={frame?.objects ?? null}
           surfaces={frame?.surfaces ?? null}
           objectNames={names}
-          surfaceNames={wallModel?.names ?? NO_NAMES}
+          surfaceNames={surfaceNames}
           stairClasses={showStairs ? stairClasses : NONE}
+          fire={frame?.fire ?? null}
         />
       ) : (
         // Phones split the bottom of the screen between these two; laptops float them in a corner.

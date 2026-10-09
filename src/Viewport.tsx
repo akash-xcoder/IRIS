@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { startAutoTorch } from './camera/torch'
+import { FireDetector } from './navigation/fire'
+import type { Hazard } from './navigation/hazards'
 import { clearCanvas, drawOverlay, dropBoxesOnStairs } from './yolo/draw'
 import type { YoloModel } from './yolo/model'
 import type { DetectResult, SegmentResult } from './yolo/types'
@@ -12,6 +14,8 @@ export interface Frame {
   surfaces: SegmentResult | null
   /** From the hazard detector, e.g. potholes and ladders. */
   hazards: DetectResult | null
+  /** Flames, spotted by colour and flicker (navigation/fire.ts). */
+  fire: Hazard | null
   /** Milliseconds from capture until every model finished. */
   elapsed: number
 }
@@ -23,6 +27,8 @@ const WALL_INTERVAL_MS = 250
 const HAZARD_INTERVAL_MS = 200
 /** Hazards are spoken, so a false alarm costs more than a stray box; they ignore lower settings. */
 const HAZARD_MIN_CONF = 0.3
+/** Time between fire checks on live video; flicker is judged across them. */
+const FIRE_INTERVAL_MS = 300
 
 interface ViewportProps {
   /** Ready-to-run models; null ones are skipped. */
@@ -68,6 +74,7 @@ async function runFrame(
     objects: o?.kind === 'detect' ? o : null,
     surfaces: s?.kind === 'semantic' ? s : null,
     hazards: h?.kind === 'detect' ? h : null,
+    fire: media instanceof HTMLImageElement ? new FireDetector().check(media, false) : null,
     elapsed: performance.now() - t0,
   }
 }
@@ -161,7 +168,7 @@ export function Viewport({
     const video = videoRef.current
     if ((!objects && !surfaces && !hazards) || !video || source?.kind !== 'camera') return
     let cancelled = false
-    const current: Frame = { objects: null, surfaces: null, hazards: null, elapsed: 0 }
+    const current: Frame = { objects: null, surfaces: null, hazards: null, fire: null, elapsed: 0 }
 
     type Slot = 'objects' | 'surfaces' | 'hazards'
     const loop = async (model: YoloModel, slot: Slot, minInterval: number, setsPace: boolean) => {
@@ -194,8 +201,14 @@ export function Viewport({
     if (objects) loop(objects, 'objects', 0, true)
     if (surfaces) loop(surfaces, 'surfaces', WALL_INTERVAL_MS, !objects)
     if (hazards) loop(hazards, 'hazards', HAZARD_INTERVAL_MS, !objects && !surfaces)
+    // Fire needs no model: a small colour check on the main thread, folded into the next frame shown.
+    const fire = new FireDetector()
+    const fireTimer = setInterval(() => {
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) current.fire = fire.check(video, true)
+    }, FIRE_INTERVAL_MS)
     return () => {
       cancelled = true
+      clearInterval(fireTimer)
     }
     // show() only reads refs.
     // oxlint-disable-next-line react-hooks/exhaustive-deps

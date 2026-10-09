@@ -2042,3 +2042,47 @@ a.button {
   overflow: hidden;
   background: var(--field);
 }
+
+/* The danger being spoken, for anyone helping with sight. */
+.danger-banner {
+  margin: 0;
+  padding: 12px 16px;
+  border-left: 6px solid var(--signal);
+  border-radius: var(--radius);
+  background: var(--field);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.danger-banner[data-urgent] {
+  border-left-color: #d93025;
+  background: #d93025;
+  color: #fff;
+}
+
+/* Scrollbars: thin, in the brand yellow. */
+:root {
+  --scrollbar-thumb: var(--signal);
+  --scrollbar-track: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Older Safari and Chrome only understand the -webkit- pseudo-elements; newer ones use the above. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d9a91a;
+}
