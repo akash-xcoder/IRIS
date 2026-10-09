@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { startAutoTorch } from './camera/torch'
 import { clearCanvas, drawOverlay, dropBoxesOnStairs } from './yolo/draw'
 import type { YoloModel } from './yolo/model'
 import type { DetectResult, SegmentResult } from './yolo/types'
@@ -93,6 +94,32 @@ export function Viewport({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [torchOn, setTorchOn] = useState(false)
+
+  // Automatic low-light flashlight manager for mobile camera
+  useEffect(() => {
+    if (source?.kind !== 'camera') {
+      setTorchOn(false)
+      return
+    }
+    const video = videoRef.current
+    if (!video) return
+    const track = source.stream.getVideoTracks()[0]
+    if (!track) return
+
+    const manager = startAutoTorch(video, track, {
+      darkThreshold: 36,
+      brightThreshold: 90,
+      sampleIntervalMs: 1500,
+      cooldownMs: 6000,
+      onChange: (active) => setTorchOn(active),
+    })
+
+    return () => {
+      manager.stop()
+      setTorchOn(false)
+    }
+  }, [source])
 
   // The camera loop reads these on every frame without restarting.
   const latest = useRef({ conf, names, hazardNames, surfaceClasses, hazardClasses, onFrame, onError })
@@ -229,6 +256,32 @@ export function Viewport({
         <span />
         <span />
       </div>
+      {torchOn && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'absolute',
+            top: '14px',
+            right: '14px',
+            background: 'rgba(0, 0, 0, 0.75)',
+            color: 'var(--signal, #f2c230)',
+            padding: '4px 10px',
+            borderRadius: '16px',
+            fontSize: '12px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            border: '1px solid rgba(242, 194, 48, 0.35)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          <span aria-hidden="true">🔦</span>
+          <span>Auto Light On</span>
+        </div>
+      )}
       {children}
     </div>
   )

@@ -93,6 +93,20 @@ export function VoiceButton({ onTrip }: { onTrip: (trip: TripRequest) => void })
               Go
             </button>
           </form>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
+            <span style={{ fontSize: '12px', opacity: 0.7, width: '100%' }}>Quick routes:</span>
+            {['Panvel to Pune', 'Mumbai to Pune', 'Thane to Navi Mumbai'].map((r) => (
+              <button
+                key={r}
+                type="button"
+                className="button"
+                style={{ fontSize: '12px', padding: '4px 8px' }}
+                onClick={() => go(r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <button

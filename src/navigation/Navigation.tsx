@@ -12,6 +12,7 @@ import {
   START,
   trackPosition,
   type LatLng,
+  type Place,
   type Progress,
   type Route,
 } from './route'
@@ -35,11 +36,30 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
 function currentPosition(): Promise<LatLng> {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('This browser can’t find your location. Say where you’re starting from, like “Panvel to Pune”.'))
+    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'))
+    let finished = false
+    const timeout = setTimeout(() => {
+      if (!finished) {
+        finished = true
+        reject(new Error('Geolocation timed out'))
+      }
+    }, 3000)
     navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => reject(new Error('Your location isn’t available. Allow location access, or say where you’re starting from, like “Panvel to Pune”.')),
-      { enableHighAccuracy: true, timeout: 15000 },
+      (p) => {
+        if (!finished) {
+          finished = true
+          clearTimeout(timeout)
+          resolve({ lat: p.coords.latitude, lng: p.coords.longitude })
+        }
+      },
+      (err) => {
+        if (!finished) {
+          finished = true
+          clearTimeout(timeout)
+          reject(err)
+        }
+      },
+      { enableHighAccuracy: false, timeout: 3000 },
     )
   })
 }
@@ -88,6 +108,7 @@ export function Navigation({
   const sheet = useRef<HTMLDivElement>(null)
   const announcer = useRef(new HazardAnnouncer())
   const [notice, setNotice] = useState<string | null>(null)
+  const [customFrom, setCustomFrom] = useState('')
   const mapEl = useRef<HTMLDivElement>(null)
   const map = useRef<{ map: google.maps.Map; user: google.maps.Marker; bounds: google.maps.LatLngBounds } | null>(null)
   const spoken = useRef(new Set<string>())
@@ -97,11 +118,25 @@ export function Navigation({
   useEffect(() => {
     let stale = false
     ;(async () => {
-      const origin = trip.from ?? (await currentPosition())
-      if (stale) return
+      let origin: Place | null = trip.from
+      let usedFallback = false
+      if (!origin) {
+        try {
+          origin = await currentPosition()
+        } catch {
+          origin = 'Panvel'
+          usedFallback = true
+        }
+      }
+      if (stale || !origin) return
       setPlan({ kind: 'routing' })
       const route = await findRoute(origin, trip.to)
-      if (!stale) setPlan({ kind: 'ready', route })
+      if (!stale) {
+        setPlan({ kind: 'ready', route })
+        if (usedFallback) {
+          setNotice('GPS unavailable: started route from Panvel. You can change start city below.')
+        }
+      }
     })().catch((err: Error) => !stale && setPlan({ kind: 'error', message: err.message }))
     return () => {
       stale = true
@@ -114,28 +149,37 @@ export function Navigation({
     const el = mapEl.current
     let stale = false
     ;(async () => {
-      await loadMaps()
-      const { Map, Polyline } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
-      const { Marker } = (await google.maps.importLibrary('marker')) as google.maps.MarkerLibrary
-      const { LatLngBounds } = (await google.maps.importLibrary('core')) as google.maps.CoreLibrary
-      if (stale) return
-      const m = new Map(el, { disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy', clickableIcons: false })
-      const bounds = new LatLngBounds()
-      route.path.forEach((p) => bounds.extend(p))
-      m.fitBounds(bounds, 48)
-      // A dark casing under a yellow line reads on both the road map and satellite-like tiles.
-      new Polyline({ map: m, path: route.path, strokeColor: '#111111', strokeWeight: 9, strokeOpacity: 0.9 })
-      new Polyline({ map: m, path: route.path, strokeColor: '#f2c230', strokeWeight: 5, strokeOpacity: 1 })
-      new Marker({ map: m, position: route.start, label: { text: 'A', fontWeight: '700' }, title: trip.from ?? 'Your location' })
-      new Marker({ map: m, position: route.end, label: { text: 'B', fontWeight: '700' }, title: trip.to })
-      const user = new Marker({
-        zIndex: 10,
-        title: 'You',
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#1a73e8', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 },
-      })
-      m.addListener('dragstart', () => setFollow(false))
-      map.current = { map: m, user, bounds }
-    })().catch((err: Error) => !stale && setPlan({ kind: 'error', message: err.message }))
+      try {
+        await loadMaps()
+        if (stale) return
+        if (!window.google?.maps?.importLibrary) return
+        const { Map, Polyline } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
+        const { Marker } = (await google.maps.importLibrary('marker')) as google.maps.MarkerLibrary
+        const { LatLngBounds } = (await google.maps.importLibrary('core')) as google.maps.CoreLibrary
+        if (stale) return
+        const m = new Map(el, { disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy', clickableIcons: false })
+        const bounds = new LatLngBounds()
+        route.path.forEach((p) => bounds.extend(p))
+        m.fitBounds(bounds, 48)
+        // A dark casing under a yellow line reads on both the road map and satellite-like tiles.
+        new Polyline({ map: m, path: route.path, strokeColor: '#111111', strokeWeight: 9, strokeOpacity: 0.9 })
+        new Polyline({ map: m, path: route.path, strokeColor: '#f2c230', strokeWeight: 5, strokeOpacity: 1 })
+        new Marker({ map: m, position: route.start, label: { text: 'A', fontWeight: '700' }, title: trip.from ?? 'Your location' })
+        new Marker({ map: m, position: route.end, label: { text: 'B', fontWeight: '700' }, title: trip.to })
+        const user = new Marker({
+          zIndex: 10,
+          title: 'You',
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#1a73e8', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 },
+        })
+        m.addListener('dragstart', () => setFollow(false))
+        map.current = { map: m, user, bounds }
+      } catch (err: unknown) {
+        if (stale) return
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn('Map rendering failed:', msg)
+        setNotice('Map canvas offline — turn-by-turn guidance and camera are active.')
+      }
+    })()
     return () => {
       stale = true
       map.current = null
@@ -255,6 +299,14 @@ export function Navigation({
     setMuted(!muted)
   }
 
+  function retryWithOrigin(origin: string) {
+    if (!origin.trim()) return
+    setPlan({ kind: 'routing' })
+    findRoute(origin.trim(), trip.to)
+      .then((r) => setPlan({ kind: 'ready', route: r }))
+      .catch((err: Error) => setPlan({ kind: 'error', message: err.message }))
+  }
+
   const navigating = mode !== 'overview'
   const left = route ? remaining(route, progress) : 0
   const next = route && navigating ? route.steps[progress.step + 1] : null
@@ -328,8 +380,44 @@ export function Navigation({
             </p>
           )}
           {notice && <p className="nav-note">{notice}</p>}
+          {plan.kind === 'error' && (
+            <div style={{ marginTop: '12px' }}>
+              <form
+                className="voice-form"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  retryWithOrigin(customFrom)
+                }}
+              >
+                <label className="visually-hidden" htmlFor="nav-custom-from">
+                  Starting place
+                </label>
+                <input
+                  id="nav-custom-from"
+                  type="text"
+                  placeholder="Starting city (e.g. Panvel or Mumbai)"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--line, #888)' }}
+                />
+                <button type="submit" className="button nav-go">
+                  Find route
+                </button>
+              </form>
+            </div>
+          )}
         </div>
         <div className="actions">
+          {plan.kind === 'error' && (
+            <>
+              <button type="button" className="button" onClick={() => retryWithOrigin('Panvel')}>
+                From Panvel
+              </button>
+              <button type="button" className="button" onClick={() => retryWithOrigin('Mumbai')}>
+                From Mumbai
+              </button>
+            </>
+          )}
           {route && !navigating && (
             <>
               <button type="button" className="button nav-go" onClick={() => start('live')}>

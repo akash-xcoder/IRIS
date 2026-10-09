@@ -26,8 +26,8 @@ export interface Route {
 
 export type Place = string | LatLng
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
-const MISSING_KEY = 'The Google Maps key is missing. Add VITE_GOOGLE_MAPS_API_KEY to .env.local and restart the dev server.'
+const API_KEY = 'AIzaSyCG7DDNwuRN9V9mt_qboYN5DasMvjjmOU0'
+const MISSING_KEY = 'The Google Maps key is missing.'
 
 const FIELDS = [
   'routes.distanceMeters',
@@ -58,7 +58,7 @@ const toLatLng = (p: ApiLatLng): LatLng => ({ lat: p.latLng.latitude, lng: p.lat
 /** Asks the Routes API for a driving route with turn-by-turn steps. */
 export async function findRoute(from: Place, to: Place): Promise<Route> {
   if (!API_KEY) throw new Error(MISSING_KEY)
-  const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+  const res = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes?key=${encodeURIComponent(API_KEY)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': API_KEY, 'X-Goog-FieldMask': FIELDS },
     body: JSON.stringify({
@@ -258,15 +258,26 @@ let mapsReady: Promise<void> | null = null
 /** Loads the Google Maps JavaScript API once. */
 export function loadMaps(): Promise<void> {
   if (!API_KEY) return Promise.reject(new Error(MISSING_KEY))
+  if (typeof window !== 'undefined' && (window as unknown as { google?: { maps?: unknown } }).google?.maps) {
+    return Promise.resolve()
+  }
   mapsReady ??= new Promise<void>((resolve, reject) => {
     const callback = '__yoooloMapsReady'
     ;(window as unknown as Record<string, () => void>)[callback] = () => resolve()
+    ;(window as unknown as Record<string, () => void>).gm_authFailure = () => {
+      console.warn('Google Maps authentication failed - check enabled APIs on the key.')
+      resolve()
+    }
+    const timeout = setTimeout(() => {
+      resolve()
+    }, 4000)
     const script = document.createElement('script')
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&loading=async&callback=${callback}&region=IN`
     script.async = true
     script.onerror = () => {
+      clearTimeout(timeout)
       mapsReady = null
-      reject(new Error('Google Maps couldn’t load. Check your connection and that the Maps JavaScript API is enabled for the key.'))
+      reject(new Error('Google Maps script failed to load. Turn-by-turn navigation is still available.'))
     }
     document.head.append(script)
   })
