@@ -34,7 +34,7 @@ function post(message: WorkerResponse, transfer: Transferable[] = []) {
 // answers with index.html or an error), the same file is fetched from here. Override with
 // VITE_MODELS_FALLBACK_URL (ending in "/"), or set it empty to disable the fallback.
 const FALLBACK_MODELS_URL: string =
-  import.meta.env.VITE_MODELS_FALLBACK_URL ?? 'https://raw.githubusercontent.com/akash-xcoder/IRIS/main/public/models/'
+  import.meta.env.VITE_MODELS_FALLBACK_URL ?? 'https://raw.githubusercontent.com/akash-xcoder/IRIS/9d68e388f6e31afd89ee4c9f81370d98dff69dd0/public/models/'
 
 function fetchModelFile(id: number, url: string): Promise<Uint8Array> {
   const urls = [url]
