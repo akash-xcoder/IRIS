@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import * as ort from 'onnxruntime-web'
+import { fetchModel } from './fetchModel'
 import { cropLabels, decodeEnd2End, decodeRaw, letterbox, type Letterbox } from './postprocess'
 import type {
   Engine,
@@ -29,23 +30,17 @@ function post(message: WorkerResponse, transfer: Transferable[] = []) {
   self.postMessage(message, transfer)
 }
 
-async function fetchModel(id: number, url: string): Promise<Uint8Array> {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`Couldn't download the model (${response.status} ${response.statusText}).`)
-  const total = Number(response.headers.get('Content-Length')) || 0
-  if (!response.body || !total) return new Uint8Array(await response.arrayBuffer())
+// Models normally come from the app's own host. If that host can't serve them (a preview server that
+// answers with index.html or an error), the same file is fetched from here. Override with
+// VITE_MODELS_FALLBACK_URL (ending in "/"), or set it empty to disable the fallback.
+const FALLBACK_MODELS_URL: string =
+  import.meta.env.VITE_MODELS_FALLBACK_URL ?? 'https://raw.githubusercontent.com/akash-xcoder/IRIS/main/public/models/'
 
-  const bytes = new Uint8Array(total)
-  const reader = response.body.getReader()
-  let loaded = 0
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    bytes.set(value, loaded)
-    loaded += value.length
-    post({ id, type: 'progress', fraction: loaded / total })
-  }
-  return bytes.subarray(0, loaded)
+function fetchModelFile(id: number, url: string): Promise<Uint8Array> {
+  const urls = [url]
+  const file = url.split('?')[0].split('/').pop()
+  if (FALLBACK_MODELS_URL && file) urls.push(FALLBACK_MODELS_URL + file)
+  return fetchModel(urls, (fraction) => post({ id, type: 'progress', fraction }))
 }
 
 async function webgpuUnavailableReason(): Promise<string | null> {
@@ -80,7 +75,7 @@ async function load(id: number, next: ModelInfo, url: string, preference: Engine
   await session?.release()
   session = null
   model = null
-  const bytes = await fetchModel(id, url)
+  const bytes = await fetchModelFile(id, url)
   const result = await createSession(bytes, preference)
   model = next
   // The first run compiles GPU shaders and allocates buffers; do it now rather than on the first frame.

@@ -36,7 +36,9 @@ async function cacheFirst(request) {
   const hit = await caches.match(request)
   if (hit) return hit
   const response = await fetch(request)
-  if (response.ok) (await caches.open(CACHE)).put(request, response.clone())
+  // Never keep an HTML page under a model URL: some hosts answer a missing file with index.html (200).
+  const isHtml = /text\/html/i.test(response.headers.get('Content-Type') ?? '')
+  if (response.ok && !(request.url.endsWith('.onnx') && isHtml)) (await caches.open(CACHE)).put(request, response.clone())
   return response
 }
 

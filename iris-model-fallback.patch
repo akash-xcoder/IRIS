@@ -1,0 +1,121 @@
+diff --git a/public/sw.js b/public/sw.js
+index c4bef8c..904579a 100644
+--- a/public/sw.js
++++ b/public/sw.js
+@@ -36,7 +36,9 @@ async function cacheFirst(request) {
+   const hit = await caches.match(request)
+   if (hit) return hit
+   const response = await fetch(request)
+-  if (response.ok) (await caches.open(CACHE)).put(request, response.clone())
++  // Never keep an HTML page under a model URL: some hosts answer a missing file with index.html (200).
++  const isHtml = /text\/html/i.test(response.headers.get('Content-Type') ?? '')
++  if (response.ok && !(request.url.endsWith('.onnx') && isHtml)) (await caches.open(CACHE)).put(request, response.clone())
+   return response
+ }
+ 
+diff --git a/src/yolo/worker.ts b/src/yolo/worker.ts
+index ca8293f..1fad380 100644
+--- a/src/yolo/worker.ts
++++ b/src/yolo/worker.ts
+@@ -1,5 +1,6 @@
+ /// <reference lib="webworker" />
+ import * as ort from 'onnxruntime-web'
++import { fetchModel } from './fetchModel'
+ import { cropLabels, decodeEnd2End, decodeRaw, letterbox, type Letterbox } from './postprocess'
+ import type {
+   Engine,
+@@ -29,23 +30,17 @@ function post(message: WorkerResponse, transfer: Transferable[] = []) {
+   self.postMessage(message, transfer)
+ }
+ 
+-async function fetchModel(id: number, url: string): Promise<Uint8Array> {
+-  const response = await fetch(url)
+-  if (!response.ok) throw new Error(`Couldn't download the model (${response.status} ${response.statusText}).`)
+-  const total = Number(response.headers.get('Content-Length')) || 0
+-  if (!response.body || !total) return new Uint8Array(await response.arrayBuffer())
+-
+-  const bytes = new Uint8Array(total)
+-  const reader = response.body.getReader()
+-  let loaded = 0
+-  for (;;) {
+-    const { done, value } = await reader.read()
+-    if (done) break
+-    bytes.set(value, loaded)
+-    loaded += value.length
+-    post({ id, type: 'progress', fraction: loaded / total })
+-  }
+-  return bytes.subarray(0, loaded)
++// Models normally come from the app's own host. If that host can't serve them (a preview server that
++// answers with index.html or an error), the same file is fetched from here. Override with
++// VITE_MODELS_FALLBACK_URL (ending in "/"), or set it empty to disable the fallback.
++const FALLBACK_MODELS_URL: string =
++  import.meta.env.VITE_MODELS_FALLBACK_URL ?? 'https://raw.githubusercontent.com/akash-xcoder/IRIS/main/public/models/'
++
++function fetchModelFile(id: number, url: string): Promise<Uint8Array> {
++  const urls = [url]
++  const file = url.split('?')[0].split('/').pop()
++  if (FALLBACK_MODELS_URL && file) urls.push(FALLBACK_MODELS_URL + file)
++  return fetchModel(urls, (fraction) => post({ id, type: 'progress', fraction }))
+ }
+ 
+ async function webgpuUnavailableReason(): Promise<string | null> {
+@@ -80,7 +75,7 @@ async function load(id: number, next: ModelInfo, url: string, preference: Engine
+   await session?.release()
+   session = null
+   model = null
+-  const bytes = await fetchModel(id, url)
++  const bytes = await fetchModelFile(id, url)
+   const result = await createSession(bytes, preference)
+   model = next
+   // The first run compiles GPU shaders and allocates buffers; do it now rather than on the first frame.
+diff --git a/src/yolo/fetchModel.ts b/src/yolo/fetchModel.ts
+new file mode 100644
+index 0000000..bef2d85
+--- /dev/null
++++ b/src/yolo/fetchModel.ts
+@@ -0,0 +1,45 @@
++/**
++ * Downloads a model, trying each URL in turn. The first URL is the app's own host; later ones are
++ * fallbacks, used only when it fails. Some preview hosts answer a model URL with index.html (status
++ * 200) or an HTTP 500 instead of the file, so a response only counts if it plausibly is an ONNX file.
++ */
++
++async function download(url: string, onProgress: (fraction: number) => void): Promise<Uint8Array> {
++  const response = await fetch(url)
++  if (!response.ok) throw new Error(`${url} answered ${[response.status, response.statusText].filter(Boolean).join(' ')}.`)
++  const type = response.headers.get('Content-Type') ?? ''
++  if (/text\/html/i.test(type)) throw new Error(`${url} returned a web page (Content-Type: ${type}), not an ONNX file.`)
++
++  const total = Number(response.headers.get('Content-Length')) || 0
++  let bytes: Uint8Array
++  if (!response.body || !total) {
++    bytes = new Uint8Array(await response.arrayBuffer())
++  } else {
++    const buffer = new Uint8Array(total)
++    const reader = response.body.getReader()
++    let loaded = 0
++    for (;;) {
++      const { done, value } = await reader.read()
++      if (done) break
++      buffer.set(value, loaded)
++      loaded += value.length
++      onProgress(loaded / total)
++    }
++    bytes = buffer.subarray(0, loaded)
++  }
++  // An ONNX file is a protobuf and starts with a field tag; '<' means an HTML page with no HTML header.
++  if (bytes.length === 0 || bytes[0] === 0x3c) throw new Error(`${url} did not return an ONNX file.`)
++  return bytes
++}
++
++export async function fetchModel(urls: string[], onProgress: (fraction: number) => void): Promise<Uint8Array> {
++  const failures: string[] = []
++  for (const url of urls) {
++    try {
++      return await download(url, onProgress)
++    } catch (err) {
++      failures.push(err instanceof Error ? err.message : String(err))
++    }
++  }
++  throw new Error(`Couldn't download the model. ${failures.join(' ')}`)
++}
