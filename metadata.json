@@ -1,0 +1,6 @@
+{
+  "name": "IRIS",
+  "description": "Real-time object detection and assistive navigation running in the browser with WebGPU and WebAssembly.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
