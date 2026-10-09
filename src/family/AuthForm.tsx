@@ -46,12 +46,28 @@ export function AuthForm({ role, idPrefix }: { role: Role; idPrefix: string }) {
       {mode === 'signup' && (
         <label className="auth-field" htmlFor={id('name')}>
           <span>Your name</span>
-          <input id={id('name')} autoComplete="name" required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            id={id('name')}
+            autoComplete="name"
+            required
+            maxLength={80}
+            placeholder={role === 'family' ? 'e.g. Priya Sharma (Mom)' : 'e.g. Rahul Sharma'}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </label>
       )}
       <label className="auth-field" htmlFor={id('email')}>
         <span>Email</span>
-        <input id={id('email')} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input
+          id={id('email')}
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </label>
       <label className="auth-field" htmlFor={id('password')}>
         <span>Password</span>
@@ -61,6 +77,7 @@ export function AuthForm({ role, idPrefix }: { role: Role; idPrefix: string }) {
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           required
           minLength={6}
+          placeholder={mode === 'signin' ? 'Your password' : 'At least 6 characters'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

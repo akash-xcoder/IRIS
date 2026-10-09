@@ -2086,3 +2086,12 @@ a.button {
 ::-webkit-scrollbar-thumb:hover {
   background: #d9a91a;
 }
+
+.auth-field input::placeholder,
+.link-row input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
