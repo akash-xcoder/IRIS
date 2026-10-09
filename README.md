@@ -5,12 +5,12 @@ Camera frames and images never leave the device.
 
 - **Objects**: YOLO26n or YOLO26s (COCO, 80 classes), NMS-free head.
 - **Walls**: YOLO26n-sem (ADE20K semantic segmentation). The `wall` class is drawn as a yellow mask, with a coverage readout.
-- **Engine**: ONNX Runtime Web on WebGPU, falling back to multi-threaded WebAssembly.
+- **Engine**: ONNX Runtime Web on WebGPU, falling back to  multi-threaded WebAssembly.
 
 YOLO27 isn't published yet (Ultralytics' page is a waitlist). It keeps the same interface as YOLO26, so when the
 weights are released, export them with the script below and they appear in the app with no code changes.
 
-## Run it 
+## Run it
 
 ```sh
 npm install
