@@ -482,8 +482,8 @@ export default function App() {
   return (
     <div className="app" data-shaking={shaking || undefined}>
       <header className="masthead">
-        <h1 className="wordmark">yooolo</h1>
-        <p className="tagline">Objects and walls, found by Ultralytics YOLO running entirely in your browser.</p>
+        <h1 className="wordmark">IRIS</h1>
+        <p className="tagline">Navigating the World Beyond Visual Barriers.</p>
       </header>
 
       <main className="workspace">

@@ -1,6 +1,6 @@
    {
      "name": "IRIS",
-     "description": "Real-time object, hazard, and navigation assistant running entirely in your browser with WebGPU or WebAssembly.",
+     "description": "Navigating the World Beyond Visual Barriers.",
      "requestFramePermissions": ["camera", "geolocation", "microphone"],
      "capabilities": [
        "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
